@@ -1,7 +1,23 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"github.com/GoliHateClub/Crawlzilla/config"
+	"github.com/GoliHateClub/Crawlzilla/database"
+)
 
 func main() {
-	fmt.Print("Hello from Bot")
+	// Load configuration
+	if err := config.LoadConfig(); err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
+	// Initialize the database
+	db, err := database.SetupDB()
+	if err != nil {
+		log.Fatalf("Database setup error: %v", err)
+	}
+
+	_ = db //TODO: delete this line if use db
 }
