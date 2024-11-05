@@ -11,17 +11,14 @@ import (
 
 // SetupDB initializes and returns a database connection
 func SetupDB() (*gorm.DB, error) {
-	// Build the database connection string
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USERNAME"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"),
-	)
+	// Retrieve the database URL from environment variables
+	databaseURL := os.Getenv("DB_URL")
+	if databaseURL == "" {
+		log.Fatal("DB_URL environment variable is not set")
+	}
 
 	// Connect to the database using GORM
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to the database: %v", err)
 	}
