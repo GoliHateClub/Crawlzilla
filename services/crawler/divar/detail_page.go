@@ -124,7 +124,10 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 		log.Println("Cant get Room:", err)
 	}
 	// Convert extracted Persian Room text to integer
-	result.Room, _ = utils.ConvertPersianNumber(stringRoom)
+	result.Room, err = utils.ConvertPersianNumber(stringRoom)
+	if err != nil {
+		log.Println("Cant convert room string to int:", err)
+	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Extract Floor and Total Floors
@@ -209,10 +212,9 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 		err = chromedp.Run(ctx,
 			chromedp.Text(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.expandable-box > div.copy-row > div > div.kt-base-row__end.kt-unexpandable-row__value-box > p`, &result.ContactNumber),
 		)
-	}
-
-	if err != nil {
-		log.Println("Cant get Contact Number:", err)
+		if err != nil {
+			log.Println("Cant get Contact Number:", err)
+		}
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
