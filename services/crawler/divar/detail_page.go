@@ -16,10 +16,10 @@ import (
 
 // ScrapeResult holds the scraped data
 type ScrapeResult struct {
+	Url           string
 	Title         string
 	Description   string
 	LocationURL   string
-	ContactNumber string
 	Latitude      float64
 	Longitude     float64
 	Area          int
@@ -27,6 +27,7 @@ type ScrapeResult struct {
 	Room          int
 	FloorNumber   int
 	TotalFloors   int
+	ContactNumber int
 	HasElevator   bool
 	HasStorage    bool
 	HasParking    bool
@@ -39,6 +40,9 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 	var stringPrice string
 	var stringRoom string
 	var stringFloors string
+	var stringContactNumber string
+
+	result.Url = pageURL
 
 	DIVAR_TOKEN := os.Getenv("DIVAR_TOKEN")
 	if DIVAR_TOKEN == "" {
@@ -210,10 +214,15 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 
 	if contactExists {
 		err = chromedp.Run(ctx,
-			chromedp.Text(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.expandable-box > div.copy-row > div > div.kt-base-row__end.kt-unexpandable-row__value-box > p`, &result.ContactNumber),
+			chromedp.Text(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.expandable-box > div.copy-row > div > div.kt-base-row__end.kt-unexpandable-row__value-box > p`, &stringContactNumber),
 		)
 		if err != nil {
 			log.Println("Cant get Contact Number:", err)
+		}
+		// Convert extracted Persian Contact number text to integer
+		result.ContactNumber, err = utils.ConvertPersianNumber(stringContactNumber)
+		if err != nil {
+			log.Println("Cant convert Contact string to int:", err)
 		}
 	}
 
