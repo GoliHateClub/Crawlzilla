@@ -1,0 +1,59 @@
+services:
+  crawlzilla_elasticsearch:
+    container_name: crawlzilla_elasticsearch
+    image: elasticsearch:8.15.3
+    volumes:
+      - crawlzilla_es_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - "discovery.type=single-node"
+    networks:
+      - crawlzilla_elk
+
+  crawlzilla_logstash:
+    container_name: crawlzilla_logstash
+    build:
+      context: .
+      dockerfile: dockerfiles/logstash.dockerfile
+    ports:
+      - 9600:9600
+      - 5228:5228
+    environment:
+      LOGSTASH_PORT: 5228
+      LOGSTASH_INDEX: "test-index"
+      ELASTIC_HOST: "crawlzilla_elasticsearch:9200"
+      ELASTIC_USERNAME: "elastic"
+      ELASTIC_PASSWORD: "elastic"
+    networks:
+      - crawlzilla_elk
+    depends_on:
+      - crawlzilla_elasticsearch
+    links:
+      - crawlzilla_elasticsearch
+
+  crawlzilla_kibana:
+    image: kibana:8.15.3
+    container_name: crawlzilla_kibana
+    hostname: kibana
+    ports:
+      - "5601:5601"
+    networks:
+      - crawlzilla_elk
+    depends_on:
+      - crawlzilla_elasticsearch
+    links:
+      - crawlzilla_elasticsearch
+    environment:
+      ELASTIC_HOST: "http://crawlzilla_elasticsearch:9200"
+      ELASTIC_USERNAME: "elastic"
+      ELASTIC_PASSWORD: "elastic"
+
+networks:
+  crawlzilla_elk:
+    driver: bridge
+
+volumes:
+  crawlzilla_es_data:
+    driver: local
