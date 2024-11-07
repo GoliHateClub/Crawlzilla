@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"github.com/GoliHateClub/Crawlzilla/handlers/bot/bootstrap" 
+)
 
 func main() {
-	fmt.Print("Hello from Bot")
+	bootstrap.RunBot()
 }
