@@ -1,20 +1,15 @@
-package ententions
+package bot
 
 import (
 	"bytes"
 	"github.com/GoliHateClub/Crawlzilla/config"
-	"github.com/GoliHateClub/Crawlzilla/handlers/bot/bootstrap"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 )
 
-type LocalBotServer struct {
-	*bootstrap.BotServer
-}
-
-func (lbs *LocalBotServer) SendPhoto(chatID int64, photoURL, caption, button1Text, button1Data, button2Text, button2Data string) error {
+func (bs *BotServer) SendPhoto(chatID int64, photoURL, caption, button1Text, button1Data, button2Text, button2Data string) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %v", err)

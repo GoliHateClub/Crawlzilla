@@ -1,4 +1,4 @@
-package views
+package bot
 
 import (
 	"log"

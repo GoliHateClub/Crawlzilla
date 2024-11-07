@@ -1,8 +1,7 @@
-package bootstrap
+package bot
 
 import (
 	"github.com/GoliHateClub/Crawlzilla/config"
-	"github.com/GoliHateClub/Crawlzilla/handlers/bot/handlers"
 	"fmt"
 	"log"
 	"net/http"
@@ -39,7 +38,6 @@ type filter struct {
 	MinDate      string `json:"min_date,omitempty"`
 	MaxDate      string `json:"max_date,omitempty"`
 }
-
 // BotServer struct with a mutex for thread-safe state access
 type BotServer struct {
 	bot            *tgbotapi.BotAPI

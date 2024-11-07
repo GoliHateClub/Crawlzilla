@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/GoliHateClub/Crawlzilla/handlers/bot/bootstrap" 
+	"github.com/GoliHateClub/Crawlzilla/handlers/bot" 
 )
 
 func main() {
-	bootstrap.RunBot()
+	bot.RunBot()
 }

@@ -1,7 +1,6 @@
-package handlers
+package bot
 
 import (
-	"github.com/GoliHateClub/Crawlzilla/handlers/bot/bootstrap"
 	"strconv"
 	"strings"
 
@@ -35,7 +34,7 @@ func (bs *BotServer) HelpCommandHandler(chatID int64) {
 
 }
 func (bs *BotServer) AdminCommandHandler(message *tgbotapi.Message) {
-	bs.UseMiddleware(message, []MiddlewareFunc{bs.RoleMiddleware(AdminRole)}, func() {
+	UseMiddleware(message, [] MiddlewareFunc{bs.RoleMiddleware( AdminRole)}, func() {
 		msg := tgbotapi.NewMessage(message.Chat.ID, "Hello, Admin! You have full access.")
 		bs.bot.Send(msg)
 	})
