@@ -36,11 +36,6 @@ type ScrapeResult struct {
 // ScrapeSellHousePage scrapes the given URL, fills the ScrapeResult struct, and returns it
 func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 	result := &ScrapeResult{}
-	var stringArea string
-	var stringPrice string
-	var stringRoom string
-	var stringFloors string
-	var stringContactNumber string
 
 	result.Url = pageURL
 
@@ -94,6 +89,8 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 
 	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Extract Area
+	var stringArea string
+
 	err = chromedp.Run(ctx,
 		chromedp.Text(`#app div.container--has-footer-d86a9.kt-container div main article div div.kt-col-5 section:nth-child(1) div.post-page__section--padded table:nth-child(1) tbody tr td:nth-child(1)`, &stringArea),
 	)
@@ -105,6 +102,8 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 
 	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Extract Price
+	var stringPrice string
+
 	err = chromedp.Run(ctx,
 		chromedp.Text(`#app div.container--has-footer-d86a9.kt-container div main article div div.kt-col-5 section:nth-child(1) div.post-page__section--padded div:nth-child(3) div.kt-base-row__end.kt-unexpandable-row__value-box p`, &stringPrice),
 	)
@@ -121,6 +120,8 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 
 	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Extract Room
+	var stringRoom string
+
 	err = chromedp.Run(ctx,
 		chromedp.Text(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.post-page__section--padded > table:nth-child(1) > tbody > tr > td:nth-child(3)`, &stringRoom),
 	)
@@ -135,27 +136,38 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 
 	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Extract Floor and Total Floors
+	var floorExists bool
+	var stringFloors string
+
 	err = chromedp.Run(ctx,
-		chromedp.Text(`#app div.container--has-footer-d86a9.kt-container div main article div div.kt-col-5 section:nth-child(1) div.post-page__section--padded div:nth-child(7) div.kt-base-row__end.kt-unexpandable-row__value-box p`, &stringFloors),
+		chromedp.EvaluateAsDevTools(`document.querySelector("#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.post-page__section--padded > div:nth-child(7) > div.kt-base-row__end.kt-unexpandable-row__value-box > p") !== null`, &floorExists),
 	)
 	if err != nil {
-		log.Println("Cant Extract Floor and Total Floors:", err)
+		log.Println("Cant get Floors element:", err)
 	}
+	if floorExists {
+		err = chromedp.Run(ctx,
+			chromedp.Text(`#app div.container--has-footer-d86a9.kt-container div main article div div.kt-col-5 section:nth-child(1) div.post-page__section--padded div:nth-child(7) div.kt-base-row__end.kt-unexpandable-row__value-box p`, &stringFloors),
+		)
+		if err != nil {
+			log.Println("Cant Extract Floor and Total Floors:", err)
+		}
 
-	// separate floor number and total floors
-	floorsSplit := strings.Split(stringFloors, " ")
-	floorNumberInt, err := utils.ConvertPersianNumber(floorsSplit[0]) // Fill the Area field
-	if err != nil {
-		log.Println("Cant convert or get Floor Number value:", err)
+		// separate floor number and total floors
+		floorsSplit := strings.Split(stringFloors, " ")
+		floorNumberInt, err := utils.ConvertPersianNumber(floorsSplit[0]) // Fill the Area field
+		if err != nil {
+			log.Println("Cant convert or get Floor Number value:", err)
+		}
+
+		totalFloorInt, err := utils.ConvertPersianNumber(floorsSplit[2]) // Fill the Area field
+		if err != nil {
+			log.Println("Cant convert or get Total Floor value:", err)
+		}
+
+		result.FloorNumber = floorNumberInt // Fill the FloorNumber field
+		result.TotalFloors = totalFloorInt  // Fill the TotalFloors field
 	}
-
-	totalFloorInt, err := utils.ConvertPersianNumber(floorsSplit[2]) // Fill the Area field
-	if err != nil {
-		log.Println("Cant convert or get Total Floor value:", err)
-	}
-
-	result.FloorNumber = floorNumberInt // Fill the FloorNumber field
-	result.TotalFloors = totalFloorInt  // Fill the TotalFloors field
 
 	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Extract Description
@@ -202,6 +214,8 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Contact number
 	var contactExists bool
+	var stringContactNumber string
+
 	err = chromedp.Run(ctx,
 		chromedp.Click(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.post-actions > button.kt-button.kt-button--primary.post-actions__get-contact`, chromedp.NodeVisible),
 		chromedp.Sleep(3*time.Second),
