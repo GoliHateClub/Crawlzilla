@@ -11,20 +11,25 @@
 
 ## Project Structure
 ```mermaid
-graph RL;
+graph TD;
 db1[(Postgres DB)]
 redis[(Redis Cache)]
 
-HTTP_Server-->db1
-HTTP_Server-->Operation
-HTTP_Server-->Crawler
-HTTP_Server-->Logstash
-HTTP_Server-->redis
+ServiceCrawler-->db1
+ServiceCrawler-->Crawler
+ServiceCrawler-->Logstash
+ServiceCrawler-->redis
+
+ServiceBot-->db1
+ServiceBot-->Operation
+ServiceBot-->Logstash
+ServiceBot-->redis
 
 Elasticsearch-->Kibana
 Kibana-->Logstash
 
-Telegram_Bot-->HTTP_Server
+Telegram_Bot-->ServiceCrawler
+Telegram_Bot-->ServiceBot
 Telegram_Bot-->redis
 Telegram_Bot-->Commands
 Telegram_Bot-->Handlers
