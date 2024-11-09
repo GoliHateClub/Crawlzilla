@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"github.com/KaranJagtiani/go-logstash"
 	"log"
 
-	"github.com/GoliHateClub/Crawlzilla/config"
-	"github.com/GoliHateClub/Crawlzilla/database"
+	"Crawlzilla/config"
+	"Crawlzilla/database"
 )
 
 func main() {
@@ -13,10 +15,18 @@ func main() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
+	// Load logger
+	logger := logstash_logger.Init("localhost", 5228, "udp", 5)
+
 	// Initialize the database
 	db, err := database.SetupDB()
 	if err != nil {
-		log.Fatalf("Database setup error: %v", err)
+		logger.Error(map[string]interface{}{
+			"message": fmt.Sprintf("Database setup error: %v", err),
+			"error":   true,
+		})
+
+		return
 	}
 
 	_ = db //TODO: delete this line if use db
