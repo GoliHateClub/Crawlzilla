@@ -1,16 +1,19 @@
 package database
 
 import (
-	"fmt"
 	"log"
 	"os"
+
+	"Crawlzilla/models/ads"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
+var DB *gorm.DB
+
 // SetupDB initializes and returns a database connection
-func SetupDB() (*gorm.DB, error) {
+func SetupDB() {
 	// Retrieve the database URL from environment variables
 	databaseURL := os.Getenv("DB_URL")
 	if databaseURL == "" {
@@ -20,19 +23,14 @@ func SetupDB() (*gorm.DB, error) {
 	// Connect to the database using GORM
 	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to the database: %v", err)
+		log.Fatalf("failed to connect to the database: %v", err)
 	}
 
-	// Verify the connection
-	sqlDB, err := db.DB()
+	// Run migrations for the CrawlResult model
+	err = db.AutoMigrate(&ads.CrawlResult{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get generic database object: %v", err)
+		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
-	if err := sqlDB.Ping(); err != nil {
-		return nil, fmt.Errorf("database connection is not alive: %v", err)
-	}
-
-	log.Println("Connected to the database successfully!")
-	return db, nil
+	DB = db
 }
