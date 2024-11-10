@@ -1,16 +1,12 @@
 package crawler
 
 import (
+	"Crawlzilla/database/repositories"
+	"Crawlzilla/services/crawler/divar"
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
 	"sync"
-	"syscall"
-
-	"Crawlzilla/database/repositories"
-	"Crawlzilla/services/crawler/divar"
 )
 
 // WorkerPool size
@@ -50,21 +46,10 @@ func worker(ctx context.Context, jobs <-chan divar.Job, wg *sync.WaitGroup) {
 	}
 }
 
-func StartCrawler() {
-	// Create a context with cancellation
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Set up a signal channel to catch SIGINT (Ctrl+C) and SIGTERM
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-	// Create the channel for jobs
+func StartCrawler(ctx context.Context) {
 	jobs := make(chan divar.Job)
-	done := make(chan struct{})
-
-	// WaitGroup to synchronize workers
 	var wg sync.WaitGroup
+	defer wg.Wait()
 
 	// Launch workers
 	for i := 0; i < numWorkers; i++ {
@@ -74,21 +59,12 @@ func StartCrawler() {
 
 	// Start a goroutine to fetch URLs and send them to the jobs channel
 	go func() {
-		divar.CrawlDivarAds(ctx, "https://divar.ir/s/iran/buy-apartment", jobs, done) //TODO: add gategories
-	}()
-
-	// Wait until scrolling is done and close jobs channel
-	go func() {
-		<-done
-		close(jobs) // Close jobs channel when done sending
+		divar.CrawlDivarAds(ctx, "https://divar.ir/s/iran/buy-apartment", jobs)
+		close(jobs)
 	}()
 
 	// Wait for shutdown signal
-	<-sigChan
+	<-ctx.Done()
 	fmt.Println("Received shutdown signal, closing down...")
-	cancel() // Signal to cancel context
-
-	// Wait for all workers to finish processing
-	wg.Wait()
-	fmt.Println("All workers stopped, exiting.")
+	return
 }
