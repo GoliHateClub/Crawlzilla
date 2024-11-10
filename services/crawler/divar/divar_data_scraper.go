@@ -1,7 +1,8 @@
-package main
+package divar
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -9,35 +10,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GoliHateClub/Crawlzilla/utils"
+	"Crawlzilla/models/ads"
+	"Crawlzilla/utils"
+
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 )
 
-// ScrapeResult holds the scraped data
-type ScrapeResult struct {
-	Url           string
-	Title         string
-	Description   string
-	LocationURL   string
-	Latitude      float64
-	Longitude     float64
-	Area          int
-	Price         int
-	Room          int
-	FloorNumber   int
-	TotalFloors   int
-	ContactNumber int
-	HasElevator   bool
-	HasStorage    bool
-	HasParking    bool
-}
+// ScrapSellHousePage scraps the given URL, fills the CrawlResult struct, and returns it
+func ScrapSellHousePage(pageURL string) (ads.CrawlResult, error) {
+	result := ads.CrawlResult{}
 
-// ScrapeSellHousePage scrapes the given URL, fills the ScrapeResult struct, and returns it
-func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
-	result := &ScrapeResult{}
-
-	result.Url = pageURL
+	fmt.Println("SCRAPING: ", pageURL)
 
 	DIVAR_TOKEN := os.Getenv("DIVAR_TOKEN")
 	if DIVAR_TOKEN == "" {
@@ -112,6 +96,9 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 	}
 	// remove price text
 	stringPrice = strings.Split(stringPrice, " ")[0]
+	if stringPrice == "مجانی" {
+		stringPrice = "0"
+	}
 	priceInt, err := utils.ConvertPersianNumber(stringPrice) // Fill the Area field
 	if err != nil {
 		log.Println("Cant convert or get Price value:", err)
@@ -136,6 +123,7 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 
 	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Extract Floor and Total Floors
+	// Extract Floor and Total Floors
 	var floorExists bool
 	var stringFloors string
 
@@ -143,7 +131,7 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 		chromedp.EvaluateAsDevTools(`document.querySelector("#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.post-page__section--padded > div:nth-child(7) > div.kt-base-row__end.kt-unexpandable-row__value-box > p") !== null`, &floorExists),
 	)
 	if err != nil {
-		log.Println("Cant get Floors element:", err)
+		log.Println("Cant get Contact Number element:", err)
 	}
 	if floorExists {
 		err = chromedp.Run(ctx,
@@ -155,18 +143,42 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 
 		// separate floor number and total floors
 		floorsSplit := strings.Split(stringFloors, " ")
-		floorNumberInt, err := utils.ConvertPersianNumber(floorsSplit[0]) // Fill the Area field
-		if err != nil {
-			log.Println("Cant convert or get Floor Number value:", err)
-		}
+		if len(floorsSplit) == 1 {
+			// Check if the floor value is "همکف"
+			if floorsSplit[0] == "همکف" {
+				result.FloorNumber = 0
+				result.TotalFloors = 0
+			} else {
+				floorNumberInt, err := utils.ConvertPersianNumber(floorsSplit[0]) // Convert the floor number
+				if err != nil {
+					log.Println("Cant convert or get Floor Number value:", err)
+				}
+				result.FloorNumber = floorNumberInt
+				result.TotalFloors = 0
+			}
+		} else {
+			// Check if the floor value is "همکف"
+			if floorsSplit[0] == "همکف" {
+				result.FloorNumber = 0
+			} else {
+				floorNumberInt, err := utils.ConvertPersianNumber(floorsSplit[0]) // Convert the floor number
+				if err != nil {
+					log.Println("Cant convert or get Floor Number value:", err)
+				}
+				result.FloorNumber = floorNumberInt
+			}
 
-		totalFloorInt, err := utils.ConvertPersianNumber(floorsSplit[2]) // Fill the Area field
-		if err != nil {
-			log.Println("Cant convert or get Total Floor value:", err)
+			// Check if the total floors value is "همکف"
+			if floorsSplit[2] == "همکف" {
+				result.TotalFloors = 0
+			} else {
+				totalFloorInt, err := utils.ConvertPersianNumber(floorsSplit[2]) // Convert the total floors
+				if err != nil {
+					log.Println("Cant convert or get Total Floor value:", err)
+				}
+				result.TotalFloors = totalFloorInt
+			}
 		}
-
-		result.FloorNumber = floorNumberInt // Fill the FloorNumber field
-		result.TotalFloors = totalFloorInt  // Fill the TotalFloors field
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -218,9 +230,8 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 
 	err = chromedp.Run(ctx,
 		chromedp.Click(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.post-actions > button.kt-button.kt-button--primary.post-actions__get-contact`, chromedp.NodeVisible),
-		chromedp.Sleep(3*time.Second),
+		chromedp.Sleep(1*time.Second),
 		chromedp.EvaluateAsDevTools(`document.querySelector("#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.expandable-box > div.copy-row > div > div.kt-base-row__end.kt-unexpandable-row__value-box > p") !== null`, &contactExists),
-		// chromedp.WaitVisible("#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.expandable-box > div.copy-row > div > div.kt-base-row__end.kt-unexpandable-row__value-box > p"),
 	)
 	if err != nil {
 		log.Println("Cant get Contact Number element:", err)
@@ -276,7 +287,31 @@ func ScrapeSellHousePage(pageURL string) (*ScrapeResult, error) {
 
 		}
 	}
-	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	// Image
+	// Check if Image element exists before extracting
+	err = chromedp.Run(ctx,
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			var exists bool
+			// Check if the selector exists
+			err := chromedp.Run(ctx, chromedp.EvaluateAsDevTools(
+				`document.querySelector("#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-6.kt-offset-1 > section:nth-child(1) > div > div > div.keen-slider.kt-base-carousel__slides.slides-d6304 > div:nth-child(1) > figure > div > picture > img") !== null`, &exists))
+			if err != nil || !exists {
+				// Element not found or error occurred, skip extraction
+				return nil
+			}
+			// Extract src attribute if element exists
+			return chromedp.AttributeValue(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-6.kt-offset-1 > section:nth-child(1) > div > div > div.keen-slider.kt-base-carousel__slides.slides-d6304 > div:nth-child(1) > figure > div > picture > img`, "src", &result.ImageURL, nil).Do(ctx)
+		}),
+	)
+	if err != nil {
+		log.Println("Cant get Image:", err)
+	}
+
+	// Add URL and Reference divar
+	result.Reference = "divar"
+	result.URL = pageURL
+	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	return result, nil
 }
