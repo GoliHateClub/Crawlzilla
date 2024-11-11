@@ -4,12 +4,13 @@ import (
 	"Crawlzilla/config"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type WriteSyncerMap struct {
@@ -99,4 +100,9 @@ func CreateLogger(scopes ...string) func(scope string) (*zap.Logger, error) {
 
 		return loggers[scope].With(zap.String("scope", scope)), nil
 	}
+}
+
+func ConfigLogger() func(scope string) (*zap.Logger, error) {
+	logConfig := CreateLogger("crawls", "bot", "database")
+	return logConfig
 }
