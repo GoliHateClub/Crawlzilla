@@ -2,6 +2,7 @@ package main
 
 import (
 	"Crawlzilla/config"
+	"Crawlzilla/database"
 	"Crawlzilla/logger"
 	"go.uber.org/zap"
 	"log"
@@ -21,11 +22,11 @@ func main() {
 	// Load logger
 
 	// Initialize the database
-	/*db, err := database.SetupDB()
+	db, err := database.SetupDB()
 	if err != nil {
 
 		return
 	}
 
-	_ = db //TODO: delete this line if use db*/
+	_ = db
 }
