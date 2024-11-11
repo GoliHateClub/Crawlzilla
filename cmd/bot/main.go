@@ -1,7 +1,31 @@
 package main
 
-import "fmt"
+import (
+	"Crawlzilla/config"
+	"Crawlzilla/logger"
+	"go.uber.org/zap"
+	"log"
+)
 
 func main() {
-	fmt.Print("Hello from Bot")
+	logConfig := logger.CreateLogger("crawls", "bot", "database")
+	crawlsLogger, _ := logConfig("craws")
+
+	// Load configuration
+	if err := config.LoadConfig(); err != nil {
+		crawlsLogger.Error("messages", zap.Error(err))
+
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
+	// Load logger
+
+	// Initialize the database
+	/*db, err := database.SetupDB()
+	if err != nil {
+
+		return
+	}
+
+	_ = db //TODO: delete this line if use db*/
 }
