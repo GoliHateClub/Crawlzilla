@@ -16,9 +16,7 @@ type Job struct {
 	URL string
 }
 
-func CrawlDivarAds(ctx context.Context, url string, jobs chan<- Job, done chan<- struct{}) {
-	defer close(done) // Signal completion at the end
-
+func CrawlDivarAds(ctx context.Context, url string, jobs chan<- Job) {
 	// Create a ChromeDP context with a timeout
 	ctx, cancel := chromedp.NewContext(ctx)
 	defer cancel()
