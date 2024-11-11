@@ -9,7 +9,7 @@ import (
 
 func main() {
 	logConfig := logger.CreateLogger("crawls", "bot", "database")
-	crawlsLogger, _ := logConfig("craws")
+	crawlsLogger, _ := logConfig("crawls")
 
 	// Load configuration
 	if err := config.LoadConfig(); err != nil {

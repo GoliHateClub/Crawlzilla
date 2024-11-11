@@ -78,7 +78,6 @@ func CreateLogger(scopes ...string) func(scope string) (*zap.Logger, error) {
 	loggers := make(map[string]*zap.Logger)
 
 	for _, scope := range scopes {
-
 		loggers[scope] = baseLogger.WithOptions(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
 			return zapcore.NewTee(
 				c,
