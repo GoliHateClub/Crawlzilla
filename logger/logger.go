@@ -46,7 +46,9 @@ func (wsm *WriteSyncerMap) GetWriteSyncer(scope string) zapcore.WriteSyncer {
 	return ws
 }
 
-func CreateLogger(scopes ...string) func(scope string) (*zap.Logger, error) {
+type ConfigLoggerType = func(scope string) (*zap.Logger, error)
+
+func CreateLogger(scopes ...string) ConfigLoggerType {
 	encoderCfg := zap.NewProductionEncoderConfig()
 	isDev := config.GetBoolean("DEV_MODE")
 
@@ -102,7 +104,7 @@ func CreateLogger(scopes ...string) func(scope string) (*zap.Logger, error) {
 	}
 }
 
-func ConfigLogger() func(scope string) (*zap.Logger, error) {
+func ConfigLogger() ConfigLoggerType {
 	logConfig := CreateLogger("crawls", "bot", "database")
 	return logConfig
 }
