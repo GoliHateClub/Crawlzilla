@@ -56,7 +56,7 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync
 	}
 }
 
-func StartCrawler(ctx context.Context) {
+func StartDivarCrawler(ctx context.Context) {
 	jobs := make(chan divar.Job)
 	var wg sync.WaitGroup
 	defer wg.Wait()

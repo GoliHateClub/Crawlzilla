@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/chromedp/chromedp"
@@ -19,7 +21,12 @@ type CategoryHandler func(context.Context, AdURL) error
 func StartConsumer(category string, adChannel <-chan AdURL) {
 
 	fmt.Println("consumer")
-	ctx := CreateChromeContext(time.Second * 240)
+	maxCrawlTime, err := strconv.Atoi(os.Getenv("MAX_CRAWL_TIME"))
+	if err != nil {
+		log.Fatalf("Error reading MAX_CRAWL_TIME from .env: %v", err)
+	}
+	maxCrawlDuration := time.Duration(maxCrawlTime) * time.Minute
+	ctx := CreateChromeContext(maxCrawlDuration)
 	defer ctx.Cancel()
 
 	// Define handlers for each category
@@ -39,7 +46,7 @@ func StartConsumer(category string, adChannel <-chan AdURL) {
 	for ad := range adChannel {
 		err := chromedp.Run(ctx.Ctx, chromedp.Navigate(ad.URL))
 		if err != nil {
-			log.Fatalf("Failed to navigate to URL %s: %v", ad.URL, err)
+			log.Printf("Failed to navigate to URL %s: %v", ad.URL, err)
 			continue
 		}
 

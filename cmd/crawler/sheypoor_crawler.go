@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -34,9 +35,14 @@ func StartSheypoorWorker(wg *sync.WaitGroup) {
 
 	// Start category scrapers
 	for name, ctg := range categories {
-		go func(categoryName, ctg string) {
 
-			ctx := sheypoor.CreateChromeContext(time.Second * 240)
+		go func(categoryName, ctg string) {
+			maxCrawlTime, err := strconv.Atoi(os.Getenv("MAX_CRAWL_TIME"))
+			if err != nil {
+				log.Fatalf("Error reading MAX_CRAWL_TIME from .env: %v", err)
+			}
+			maxCrawlDuration := time.Duration(maxCrawlTime) * time.Minute
+			ctx := sheypoor.CreateChromeContext(maxCrawlDuration)
 			defer ctx.Cancel()
 			sheypoor.ScrapeCategory(categoryName, ctx.Ctx, ctg, urlChannel, batchSize)
 		}(name, ctg)

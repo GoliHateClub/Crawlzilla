@@ -86,6 +86,7 @@ func CreateChromeContext(timeout time.Duration) *ChromeContext {
 	ctx, cancelChrome := chromedp.NewContext(context.Background())
 
 	// Wrap context with timeout
+
 	ctx, cancelTimeout := context.WithTimeout(ctx, timeout)
 
 	return &ChromeContext{

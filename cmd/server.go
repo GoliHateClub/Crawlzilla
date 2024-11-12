@@ -42,12 +42,20 @@ func main() {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	// Start Crawler
+	// Start Divar Crawler
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		fmt.Println("Starting Crawler...")
-		crawler.StartCrawler(ctx)
+		crawler.StartDivarCrawler(ctx)
+		fmt.Println("Crawler stopped.")
+	}()
+
+	// Start Sheypoor Crawler
+	wg.Add(1)
+	go func() {
+		fmt.Println("Starting Crawler...")
+		crawler.StartSheypoorWorker(&wg)
 		fmt.Println("Crawler stopped.")
 	}()
 
