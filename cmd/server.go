@@ -37,6 +37,15 @@ func main() {
 
 	// Create a context that cancels on SIGINT or SIGTERM
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+
+	/*
+		!Tip!
+
+		To inject dependencies to services and apps, you can pass dependencies
+		value to global context.
+	*/
+	ctx = context.WithValue(ctx, "configLogger", configLogger)
+
 	defer stop()
 
 	var wg sync.WaitGroup

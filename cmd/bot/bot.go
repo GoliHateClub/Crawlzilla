@@ -1,12 +1,16 @@
 package bot
 
 import (
+	cfg "Crawlzilla/logger"
 	"context"
 	"fmt"
 )
 
 func StartBot(ctx context.Context) {
-	fmt.Println("Hello from Bot")
+	configLogger := ctx.Value("configLogger").(cfg.ConfigLoggerType)
+	botLogger, _ := configLogger("bot")
+
+	botLogger.Info("Bot started successfully")
 
 	// Listen for the shutdown signal from the context
 	select {
