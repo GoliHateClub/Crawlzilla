@@ -1,7 +1,17 @@
 package bot
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
-func StartBot() {
-	fmt.Print("Hello from Bot")
+func StartBot(ctx context.Context) {
+	fmt.Println("Hello from Bot")
+
+	// Listen for the shutdown signal from the context
+	select {
+	case <-ctx.Done(): // triggered if the server's context is canceled
+		fmt.Println("Bot received shutdown signal from context, stopping...")
+		return
+	}
 }
