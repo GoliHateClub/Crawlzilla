@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,7 +24,13 @@ func CrawlDivarAds(ctx context.Context, url string, jobs chan<- Job) {
 	defer cancel()
 
 	// Set timeout for the scraping task
-	ctx, cancel = context.WithTimeout(ctx, 3*time.Hour) //TODO: from .env
+	maxCrawlTime, err := strconv.Atoi(os.Getenv("MAX_CRAWL_TIME"))
+	if err != nil {
+		log.Fatalf("Error reading MAX_CRAWL_TIME from .env: %v", err)
+	}
+	maxCrawlDuration := time.Duration(maxCrawlTime) * time.Minute
+
+	ctx, cancel = context.WithTimeout(ctx, maxCrawlDuration)
 	defer cancel()
 
 	htmlChan := make(chan string)
@@ -32,14 +40,17 @@ func CrawlDivarAds(ctx context.Context, url string, jobs chan<- Job) {
 		defer close(htmlChan)
 
 		page := 0
-		const maxPage = 10 //TODO: from .env
+		maxPage, err := strconv.Atoi(os.Getenv("MAX_PAGE"))
+		if err != nil {
+			log.Println("Error reading MAX_PAGE from .env: ", err)
+		}
 		var lastHeight, newHeight int64
 
 		if err := chromedp.Run(ctx, chromedp.Navigate(url)); err != nil {
 			log.Fatal("Navigation error:", err)
 		}
 
-		for page < maxPage {
+		for {
 			select {
 			case <-ctx.Done():
 				// Gracefully stop scrolling if context is canceled
@@ -86,6 +97,11 @@ func CrawlDivarAds(ctx context.Context, url string, jobs chan<- Job) {
 				}
 				htmlChan <- html
 				page++
+				if page >= maxPage {
+					fmt.Println("max page reached, stopping...")
+					cancel() // Trigger context cancellation
+					return
+				}
 			}
 		}
 	}()

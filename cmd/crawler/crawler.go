@@ -6,17 +6,20 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 	"sync"
 )
 
 // WorkerPool size
 const numWorkers = 1 //TODO: from .env
 
-var adNumber int //TODO: from .env
+var adCounter int
 
 // Worker function that processes jobs
-func worker(ctx context.Context, jobs <-chan divar.Job, wg *sync.WaitGroup) {
+func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync.WaitGroup, cancel context.CancelFunc) {
 	defer wg.Done()
+
 	for {
 		select {
 		case job, ok := <-jobs:
@@ -24,19 +27,26 @@ func worker(ctx context.Context, jobs <-chan divar.Job, wg *sync.WaitGroup) {
 				// Jobs channel closed, exit worker
 				return
 			}
-			fmt.Println("Scraping Ad Number:", adNumber)
+
+			fmt.Println("Scraping Ad Number:", adCounter)
 			data, err := divar.ScrapSellHousePage("https://divar.ir" + job.URL)
 			if err != nil {
-				log.Println("Can't add scrap divar page!", job.URL)
+				log.Println("Can't scrap divar page!", job.URL)
 				continue
 			}
 			// Save the scrape data to the database
 			if err := repositories.AddCrawlResult(&data); err != nil {
 				log.Fatalf("Failed to add scrape result: %v", err)
 			} else {
-				fmt.Println("Add to DB successfully!\n")
+				fmt.Println("Added to DB successfully!")
 			}
-			adNumber++
+
+			// Increment the counter and check if we reached maxAdCount
+			adCounter++
+			if adCounter >= maxAdCount {
+				cancel() // Trigger context cancellation
+				return
+			}
 
 		case <-ctx.Done():
 			// Context canceled, exit worker
@@ -51,16 +61,26 @@ func StartCrawler(ctx context.Context) {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
+	// Get maxAdCount from environment
+	maxAdCount, err := strconv.Atoi(os.Getenv("MAX_AD_COUNT"))
+	if err != nil {
+		log.Fatalf("Error reading MAX_AD_COUNT from .env: %v", err)
+	}
+
+	// Create a cancellable context for controlled shutdown
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	// Launch workers
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
-		go worker(ctx, jobs, &wg)
+		go worker(ctx, jobs, maxAdCount, &wg, cancel)
 	}
 
 	// Start a goroutine to fetch URLs and send them to the jobs channel
 	go func() {
+		defer close(jobs)
 		divar.CrawlDivarAds(ctx, "https://divar.ir/s/iran/buy-apartment", jobs)
-		close(jobs)
 	}()
 
 	// Wait for shutdown signal

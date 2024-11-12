@@ -33,7 +33,13 @@ func ScrapSellHousePage(pageURL string) (ads.CrawlResult, error) {
 	defer cancel()
 
 	// Set timeout for the scraping task
-	ctx, cancel = context.WithTimeout(ctx, 10*time.Second)
+	maxScrapTime, err := strconv.Atoi(os.Getenv("MAX_SCRAP_TIME"))
+	if err != nil {
+		log.Fatalf("Error reading MAX_CRAWL_TIME from .env: %v", err)
+	}
+	maxScrapDuration := time.Duration(maxScrapTime) * time.Minute
+	// Set timeout for the scraping task
+	ctx, cancel = context.WithTimeout(ctx, maxScrapDuration)
 	defer cancel()
 
 	// Define the cookie parameters.
@@ -53,7 +59,7 @@ func ScrapSellHousePage(pageURL string) (ads.CrawlResult, error) {
 	})
 
 	// Run the Chromedp tasks
-	err := chromedp.Run(ctx,
+	err = chromedp.Run(ctx,
 		network.Enable(),           // Enable the network domain to apply cookies
 		setCookie,                  // Set the cookie
 		chromedp.Navigate(pageURL)) // Navigate to the page
