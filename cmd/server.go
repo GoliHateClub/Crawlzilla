@@ -56,7 +56,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		fmt.Println("Starting Crawler...")
-		crawler.StartCrawler(ctx)
+		crawler.StartDivarCrawler(ctx)
 		fmt.Println("Crawler stopped.")
 	}()
 
