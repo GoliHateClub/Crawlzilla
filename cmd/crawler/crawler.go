@@ -36,7 +36,7 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync
 			}
 			// Save the scrape data to the database
 			if err := repositories.AddCrawlResult(&data); err != nil {
-				log.Fatalf("Failed to add scrape result: %v", err)
+				log.Printf("Failed to add scrape result: %v", err)
 			} else {
 				fmt.Println("Added to DB successfully!\n")
 			}
@@ -64,7 +64,7 @@ func StartDivarCrawler(ctx context.Context) {
 	// Get maxAdCount from environment
 	maxAdCount, err := strconv.Atoi(os.Getenv("MAX_AD_COUNT"))
 	if err != nil {
-		log.Fatalf("Error reading MAX_AD_COUNT from .env: %v", err)
+		log.Printf("Error reading MAX_AD_COUNT from .env: %v", err)
 	}
 
 	// Create a cancellable context for controlled shutdown

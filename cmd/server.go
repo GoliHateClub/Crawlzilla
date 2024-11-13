@@ -21,7 +21,7 @@ import (
 func main() {
 	// Load configuration
 	if err := config.LoadConfig(); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+		log.Printf("Error loading .env file: %v", err)
 	}
 
 	// Config logger
