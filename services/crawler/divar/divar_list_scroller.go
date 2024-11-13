@@ -124,7 +124,7 @@ func CrawlDivarAds(ctx context.Context, url string, jobs chan<- Job) {
 				if href, exists := s.Attr("href"); exists {
 					select {
 					case jobs <- Job{URL: href}:
-						fmt.Println("Link added to jobs:", href)
+						fmt.Println("scrap started")
 					case <-ctx.Done():
 						fmt.Println("Job sending received shutdown signal, stopping...")
 						return

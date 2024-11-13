@@ -29,16 +29,16 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync
 			}
 
 			fmt.Println("Scraping Ad Number:", adCounter)
-			data, err := divar.ScrapSellHousePage("https://divar.ir" + job.URL)
+			data, err := divar.ScrapPropertyPage("https://divar.ir" + job.URL)
 			if err != nil {
-				log.Println("Can't scrap divar page!", job.URL)
+				log.Println("page passed! property type is not house or vila\n")
 				continue
 			}
 			// Save the scrape data to the database
 			if err := repositories.AddCrawlResult(&data); err != nil {
 				log.Fatalf("Failed to add scrape result: %v", err)
 			} else {
-				fmt.Println("Added to DB successfully!")
+				fmt.Println("Added to DB successfully!\n")
 			}
 
 			// Increment the counter and check if we reached maxAdCount
@@ -56,7 +56,7 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync
 	}
 }
 
-func StartCrawler(ctx context.Context) {
+func StartDivarCrawler(ctx context.Context) {
 	jobs := make(chan divar.Job)
 	var wg sync.WaitGroup
 	defer wg.Wait()
@@ -80,7 +80,7 @@ func StartCrawler(ctx context.Context) {
 	// Start a goroutine to fetch URLs and send them to the jobs channel
 	go func() {
 		defer close(jobs)
-		divar.CrawlDivarAds(ctx, "https://divar.ir/s/iran/buy-apartment", jobs)
+		divar.CrawlDivarAds(ctx, "https://divar.ir/s/iran/real-estate", jobs)
 	}()
 
 	// Wait for shutdown signal
