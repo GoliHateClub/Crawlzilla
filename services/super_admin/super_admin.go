@@ -5,7 +5,7 @@ import (
 	"Crawlzilla/models/ads"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -16,7 +16,7 @@ func IsSuperAdmin(userID int64) bool {
 	if err != nil {
 		return false
 	}
-
+	fmt.Println(superAdminId)
 	return superAdminId == userID
 }
 
@@ -58,9 +58,6 @@ func validateTitle(title string) error {
 
 // validateLocationURL checks if the location URL is valid
 func validateLocationURL(url string) error {
-	if url == "" {
-		return errors.New("location URL cannot be empty")
-	}
 	if len(url) > 255 {
 		return errors.New("location URL length exceeds 255 characters")
 	}
@@ -88,15 +85,18 @@ func validateCoordinates(lat, long float64) error {
 
 // AddAdForSuperAdmin attempts to save the ad, letting GORM handle model validation constraints
 func AddAdForSuperAdmin(result *ads.CrawlResult) error {
+	if result == nil {
+		return fmt.Errorf("result cannot be nil")
+	}
+
 	if err := ValidateCrawlResultData(result); err != nil {
 		return err
 	}
 
 	if err := repositories.AddCrawlResult(result); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fmt.Errorf("gorm validation failed: %v", err)
-		}
-		return fmt.Errorf("database error: %v", err)
+		log.Fatalf("Failed to add data: %v", err)
+	} else {
+		fmt.Println("Data has been added to the DB successfully!")
 	}
 	return nil
 }
