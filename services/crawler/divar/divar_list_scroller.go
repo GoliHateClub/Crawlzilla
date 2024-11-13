@@ -26,7 +26,7 @@ func CrawlDivarAds(ctx context.Context, url string, jobs chan<- Job) {
 	// Set timeout for the scraping task
 	maxCrawlTime, err := strconv.Atoi(os.Getenv("MAX_CRAWL_TIME"))
 	if err != nil {
-		log.Fatalf("Error reading MAX_CRAWL_TIME from .env: %v", err)
+		log.Printf("Error reading MAX_CRAWL_TIME from .env: %v", err)
 	}
 	maxCrawlDuration := time.Duration(maxCrawlTime) * time.Minute
 
@@ -47,7 +47,7 @@ func CrawlDivarAds(ctx context.Context, url string, jobs chan<- Job) {
 		var lastHeight, newHeight int64
 
 		if err := chromedp.Run(ctx, chromedp.Navigate(url)); err != nil {
-			log.Fatal("Navigation error:", err)
+			log.Println("Navigation error:", err)
 		}
 
 		for {

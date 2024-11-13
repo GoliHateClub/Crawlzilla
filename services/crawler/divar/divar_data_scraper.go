@@ -37,7 +37,7 @@ func ScrapPropertyPage(pageURL string) (ads.CrawlResult, error) {
 	// Set timeout for the scraping task
 	maxScrapTime, err := strconv.Atoi(os.Getenv("MAX_SCRAP_TIME"))
 	if err != nil {
-		log.Fatalf("Error reading MAX_CRAWL_TIME from .env: %v", err)
+		log.Printf("Error reading MAX_CRAWL_TIME from .env: %v", err)
 	}
 	maxScrapDuration := time.Duration(maxScrapTime) * time.Second
 	// Set timeout for the scraping task
@@ -458,7 +458,7 @@ func ScrapPropertyPage(pageURL string) (ads.CrawlResult, error) {
 	)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("cant get elevator balcony storage parking: %v", err)
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
