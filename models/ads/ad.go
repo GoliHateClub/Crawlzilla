@@ -10,10 +10,13 @@ type CrawlResult struct {
 	ImageURL      string  `gorm:"type:varchar(255)"`
 	URL           string  `gorm:"type:varchar(255)"`
 	Reference     string  `gorm:"type:varchar(10)"`
+	CategoryType  string  `gorm:"type:varchar(10)"`
+	PropertyType  string  `gorm:"type:varchar(10)"`
 	Latitude      float64 `gorm:"type:decimal(9,6)"`
 	Longitude     float64 `gorm:"type:decimal(9,6)"`
 	Area          int     `gorm:"type:int"`
 	Price         int     `gorm:"type:int"`
+	Rent          int     `gorm:"type:int"`
 	Room          int     `gorm:"type:int"`
 	FloorNumber   int     `gorm:"type:int"`
 	TotalFloors   int     `gorm:"type:int"`
@@ -22,4 +25,5 @@ type CrawlResult struct {
 	HasElevator   bool    `gorm:"type:boolean"`
 	HasStorage    bool    `gorm:"type:boolean"`
 	HasParking    bool    `gorm:"type:boolean"`
+	HasBalcony    bool    `gorm:"type:boolean"`
 }
