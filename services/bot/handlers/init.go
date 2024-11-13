@@ -1,6 +1,9 @@
 package handlers
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+import (
+	"context"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+)
 
 type ConfigurationType struct {
 	NewUpdateOffset int
@@ -12,7 +15,8 @@ var Configuration = &ConfigurationType{
 	Timeout:         60,
 }
 
-func Init(bot *tgbotapi.BotAPI) {
+func Init(ctx context.Context) {
+	bot := ctx.Value("bot").(*tgbotapi.BotAPI)
 	u := tgbotapi.NewUpdate(Configuration.NewUpdateOffset)
 	u.Timeout = Configuration.Timeout
 
@@ -20,7 +24,18 @@ func Init(bot *tgbotapi.BotAPI) {
 
 	// Loop through each update.
 	for update := range updates {
-		// ToDo handle messages
-		print(update.UpdateID)
+		if update.Message != nil && update.Message.IsCommand() {
+			HandleCommands(ctx, update)
+		}
+
+		// Handle messages in conversation
+		if update.Message != nil {
+			HandleConversation(ctx, update)
+		}
+
+		// Handle callback queries (from InlineKeyboard)
+		if update.CallbackQuery != nil {
+			HandleCallbacks(ctx, update)
+		}
 	}
 }

@@ -2,7 +2,8 @@ package bot
 
 import (
 	cfg "Crawlzilla/logger"
-	"Crawlzilla/services/bot"
+	tgBot "Crawlzilla/services/bot"
+	"Crawlzilla/services/bot/handlers"
 	"context"
 	"fmt"
 )
@@ -14,7 +15,11 @@ func StartBot(ctx context.Context) {
 
 	botLogger.Info("Bot started successfully")
 
-	bot.Init()
+	bot := tgBot.Init()
+
+	ctx = context.WithValue(ctx, "bot", bot)
+
+	handlers.Init(ctx)
 
 	// Listen for the shutdown signal from the context
 	select {
