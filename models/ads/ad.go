@@ -9,6 +9,8 @@ type CrawlResult struct {
 	LocationURL   string  `gorm:"type:varchar(255)"`
 	ImageURL      string  `gorm:"type:varchar(255)"`
 	URL           string  `gorm:"type:varchar(255)"`
+	City          string  `gorm:"type:varchar(32)"`
+	Neighborhood  string  `gorm:"type:varchar(32)"`
 	Reference     string  `gorm:"type:varchar(10)"`
 	CategoryType  string  `gorm:"type:varchar(10)"`
 	PropertyType  string  `gorm:"type:varchar(10)"`

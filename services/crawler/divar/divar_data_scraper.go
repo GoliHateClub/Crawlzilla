@@ -111,7 +111,42 @@ func ScrapPropertyPage(pageURL string) (ads.CrawlResult, error) {
 		chromedp.Text(`#app div.container--has-footer-d86a9.kt-container div main article div div.kt-col-5 section:nth-child(1) div.kt-page-title div h1`, &result.Title),
 	)
 	if err != nil {
-		log.Println("Cant convert or get Total Floor value:", err)
+		log.Println("Cant get Title:", err)
+	}
+
+	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	// Extract City
+	var stringCity string
+
+	err = chromedp.Run(ctx,
+		chromedp.Text(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.kt-page-title > div > div`, &stringCity),
+	)
+	if err != nil {
+		log.Println("Cant Get City:", err)
+	}
+
+	// Find the index of "در"
+	index := strings.Index(stringCity, "در ")
+	if index == -1 {
+		fmt.Println("The text does not contain 'در'")
+		return result, errors.New("")
+	}
+
+	// Get the part of the text after "در" and trim any leading or trailing spaces
+	locationPart := strings.TrimSpace(stringCity[index+len("در "):])
+
+	// Split the location part by spaces
+	locationParts := strings.Split(locationPart, "، ")
+
+	// Check if there is at least one part for the city
+	if len(locationParts) > 0 {
+		// The first part is the city
+		result.City = locationParts[0]
+	}
+
+	// If there are more parts, join them as the neighborhood
+	if len(locationParts) > 1 {
+		result.Neighborhood = strings.Join(locationParts[1:], " ")
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
