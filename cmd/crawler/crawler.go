@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"Crawlzilla/database"
 	"Crawlzilla/database/repositories"
 	"Crawlzilla/services/crawler/divar"
 	"context"
@@ -35,7 +36,7 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync
 				continue
 			}
 			// Save the scrape data to the database
-			if err := repositories.AddCrawlResult(&data); err != nil {
+			if err := repositories.AddCrawlResult(&data, database.DB); err != nil {
 				log.Printf("Failed to add scrape result: %v", err)
 			} else {
 				fmt.Println("Added to DB successfully!\n")

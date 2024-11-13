@@ -78,6 +78,7 @@ func ScrapPropertyPage(pageURL string) (ads.CrawlResult, error) {
 	)
 	if err != nil {
 		log.Println("cant get category string:", err)
+		return result, errors.New("")
 	}
 
 	category_property := strings.Split(categoryText, " ")
