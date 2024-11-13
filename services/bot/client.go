@@ -33,7 +33,7 @@ func Init() *tgbotapi.BotAPI {
 
 		// Create HTTP client with the proxy
 		client := &http.Client{Transport: transport}
-		bot, err := tgbotapi.NewBotAPIWithClient(os.Getenv("TELEGRAM_APITOKEN"), client)
+		bot, err := tgbotapi.NewBotAPIWithClient(os.Getenv("TELEGRAM_BOT"), client)
 
 		if err != nil {
 			log.Panic(err)
