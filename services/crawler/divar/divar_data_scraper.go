@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"Crawlzilla/models/ads"
+	"Crawlzilla/models"
 	"Crawlzilla/utils"
 
 	"github.com/chromedp/cdproto/cdp"
@@ -19,9 +19,9 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-// ScrapPropertyPage scraps the given URL, fills the CrawlResult struct, and returns it
-func ScrapPropertyPage(pageURL string) (ads.CrawlResult, error) {
-	result := ads.CrawlResult{}
+// ScrapPropertyPage scraps the given URL, fills the Ads struct, and returns it
+func ScrapPropertyPage(pageURL string) (models.Ads, error) {
+	result := models.Ads{}
 
 	fmt.Println("SCRAPING: ", pageURL)
 
@@ -78,6 +78,7 @@ func ScrapPropertyPage(pageURL string) (ads.CrawlResult, error) {
 	)
 	if err != nil {
 		log.Println("cant get category string:", err)
+		return result, errors.New("")
 	}
 
 	category_property := strings.Split(categoryText, " ")

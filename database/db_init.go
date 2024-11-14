@@ -4,10 +4,11 @@ import (
 	"log"
 	"os"
 
-	"Crawlzilla/models/ads"
+	"Crawlzilla/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
@@ -21,13 +22,13 @@ func SetupDB() error {
 	}
 
 	// Connect to the database using GORM
-	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		log.Fatalf("failed to connect to the database: %v", err)
 	}
 
-	// Run migrations for the CrawlResult model
-	err = db.AutoMigrate(&ads.CrawlResult{})
+	// Run migrations for the Ads model
+	err = db.AutoMigrate(&models.Ads{})
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
