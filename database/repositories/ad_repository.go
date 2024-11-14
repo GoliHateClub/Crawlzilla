@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// AddCrawlResult adds a new scrap result to the database if it doesn't already exist
+// AddAd adds a new scrap result to the database if it doesn't already exist
 func CreateAd(result *models.Ads, database *gorm.DB) (string, error) {
 	// Manually call BeforeCreate to generate the hash before querying the database
 	if err := result.BeforeCreate(database); err != nil {
@@ -37,21 +37,21 @@ func CreateAd(result *models.Ads, database *gorm.DB) (string, error) {
 	return "", err
 }
 
-// GetAllCrawlResults retrieves all scrap results
+// GetAllAds retrieves all scrap results
 func GetAllAds(database *gorm.DB) ([]models.Ads, error) {
 	var results []models.Ads
 	err := database.Find(&results).Error
 	return results, err
 }
 
-// GetCrawlResultByID retrieves a scrap result by ID
+// GetAdByID retrieves a scrap result by ID
 func GetAdByID(id string, database *gorm.DB) (models.Ads, error) {
 	var result models.Ads
 	err := database.First(&result, id).Error
 	return result, err
 }
 
-// DeleteCrawlResult deletes a scrap result by ID
+// DeleteAd deletes a scrap result by ID
 func DeleteAdById(id string, database *gorm.DB) error {
 	return database.Delete(&models.Ads{}, id).Error
 }
