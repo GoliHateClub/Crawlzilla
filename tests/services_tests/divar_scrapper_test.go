@@ -1,4 +1,4 @@
-package divar
+package services_tests
 
 import (
 	"Crawlzilla/services/crawler/divar"
