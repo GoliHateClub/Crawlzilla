@@ -86,7 +86,7 @@ func validateCoordinates(lat, long float64) error {
 }
 
 // AddAdForSuperAdmin attempts to save the ad, letting GORM handle model validation constraints
-func AddAdForSuperAdmin(result *models.Ads, database *gorm.DB) error {
+func CreateAd(result *models.Ads, database *gorm.DB) error {
 	if result == nil {
 		return fmt.Errorf("result cannot be nil")
 	}
