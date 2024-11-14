@@ -28,7 +28,7 @@ func SetupDB() error {
 	}
 
 	// Run migrations for the Ads model
-	err = db.AutoMigrate(&models.Ads{})
+	err = db.AutoMigrate(&models.Ads{}, &models.Filters{}, &models.Users{})
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}

@@ -13,6 +13,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"Crawlzilla/cmd/crawler"
 	"Crawlzilla/config"
 	"Crawlzilla/database"
 	"Crawlzilla/logger"
