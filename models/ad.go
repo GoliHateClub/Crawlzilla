@@ -1,15 +1,16 @@
-package ads
+package models
 
 import (
 	"crypto/sha256"
 	"encoding/hex"
 	"reflect"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-// CrawlResult struct definition as before
-type CrawlResult struct {
+// Ads struct definition as before
+type Ads struct {
 	ID            string  `gorm:"type:uuid;primary_key;"`
 	Hash          string  `gorm:"type:char(64);uniqueIndex"` // Unique hash to prevent duplicates
 	Title         string  `gorm:"type:varchar(50);not null"`
@@ -38,7 +39,10 @@ type CrawlResult struct {
 	HasBalcony    bool    `gorm:"type:boolean"`
 }
 
-func (c *CrawlResult) BeforeCreate(tx *gorm.DB) (err error) {
+func (c *Ads) BeforeCreate(tx *gorm.DB) (err error) {
+	// Set the ID to a new UUID
+	c.ID = uuid.NewString()
+
 	// Create a variable to store the concatenated string
 	var hashInput string
 

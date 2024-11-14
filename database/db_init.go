@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"Crawlzilla/models/ads"
+	"Crawlzilla/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -27,8 +27,8 @@ func SetupDB() error {
 		log.Fatalf("failed to connect to the database: %v", err)
 	}
 
-	// Run migrations for the CrawlResult model
-	err = db.AutoMigrate(&ads.CrawlResult{})
+	// Run migrations for the Ads model
+	err = db.AutoMigrate(&models.Ads{})
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
