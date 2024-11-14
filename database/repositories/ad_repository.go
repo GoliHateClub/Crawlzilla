@@ -45,13 +45,13 @@ func GetAllAds(database *gorm.DB) ([]models.Ads, error) {
 }
 
 // GetCrawlResultByID retrieves a scrap result by ID
-func GetAdByID(id uint, database *gorm.DB) (models.Ads, error) {
+func GetAdByID(id string, database *gorm.DB) (models.Ads, error) {
 	var result models.Ads
 	err := database.First(&result, id).Error
 	return result, err
 }
 
 // DeleteCrawlResult deletes a scrap result by ID
-func DeleteAdById(id uint, database *gorm.DB) error {
+func DeleteAdById(id string, database *gorm.DB) error {
 	return database.Delete(&models.Ads{}, id).Error
 }
