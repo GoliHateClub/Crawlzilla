@@ -31,6 +31,9 @@ func ValidateCrawlResultData(result *ads.CrawlResult) error {
 	if err := validateLocationURL(result.LocationURL); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
+	if err := validateURL(result.LocationURL); err != nil { // Use validateURL here
+		validationErrors = append(validationErrors, err.Error())
+	}
 	if err := validatePrice(result.Price); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
@@ -79,6 +82,17 @@ func validateCoordinates(lat, long float64) error {
 	}
 	if long < -180 || long > 180 {
 		return fmt.Errorf("longitude %v is out of range (-180 to 180)", long)
+	}
+	return nil
+}
+
+// validateURL checks if the provided URL is a valid URL or not.
+func validateURL(url string) error {
+	if url == "" {
+		return errors.New("URL cannot be empty")
+	}
+	if len(url) > 255 {
+		return errors.New("URL length exceeds 255 characters")
 	}
 	return nil
 }
