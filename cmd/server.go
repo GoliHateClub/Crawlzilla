@@ -11,7 +11,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"Crawlzilla/cmd/bot"
 	"Crawlzilla/cmd/crawler"
 	"Crawlzilla/config"
 	"Crawlzilla/database"
@@ -61,13 +60,13 @@ func main() {
 	}()
 
 	// Start Bot
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		fmt.Println("Starting Bot...")
-		bot.StartBot(ctx)
-		fmt.Println("Bot stopped.")
-	}()
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	fmt.Println("Starting Bot...")
+	// 	bot.StartBot(ctx)
+	// 	fmt.Println("Bot stopped.")
+	// }()
 
 	// Wait for shutdown signal
 	<-ctx.Done()
