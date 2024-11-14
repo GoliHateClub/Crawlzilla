@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Crawlzilla/cmd/crawler"
 	"context"
 	"fmt"
 	"log"
@@ -12,7 +13,6 @@ import (
 	"go.uber.org/zap"
 
 	"Crawlzilla/cmd/bot"
-	"Crawlzilla/cmd/crawler"
 	"Crawlzilla/config"
 	"Crawlzilla/database"
 	"Crawlzilla/logger"
@@ -52,13 +52,15 @@ func main() {
 	defer wg.Wait()
 
 	// Start Crawler
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		fmt.Println("Starting Crawler...")
-		crawler.StartDivarCrawler(ctx)
-		fmt.Println("Crawler stopped.")
-	}()
+	if config.GetBoolean("IS_CRAWLER_ACTIVE") {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fmt.Println("Starting Crawler...")
+			crawler.StartDivarCrawler(ctx)
+			fmt.Println("Crawler stopped.")
+		}()
+	}
 
 	// Start Bot
 	wg.Add(1)
