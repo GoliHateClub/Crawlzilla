@@ -1,7 +1,9 @@
 package crawler
 
 import (
+	"Crawlzilla/database"
 	"Crawlzilla/database/repositories"
+	cfg "Crawlzilla/logger"
 	"Crawlzilla/services/crawler/divar"
 	"context"
 	"fmt"
@@ -9,6 +11,8 @@ import (
 	"os"
 	"strconv"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 // WorkerPool size
@@ -20,6 +24,9 @@ var adCounter int
 func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync.WaitGroup, cancel context.CancelFunc) {
 	defer wg.Done()
 
+	configLogger := ctx.Value("configLogger").(cfg.ConfigLoggerType)
+	crawlerLogger, _ := configLogger("crawler")
+
 	for {
 		select {
 		case job, ok := <-jobs:
@@ -28,17 +35,21 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync
 				return
 			}
 
+			crawlerLogger.Info("Scraping Ad Number", zap.Int("adCounter", adCounter))
 			fmt.Println("Scraping Ad Number:", adCounter)
-			data, err := divar.ScrapSellHousePage("https://divar.ir" + job.URL)
+			data, err := divar.ScrapPropertyPage("https://divar.ir" + job.URL)
 			if err != nil {
-				log.Println("Can't scrap divar page!", job.URL)
+				log.Println("page passed! property type is not house or vila\n")
+				crawlerLogger.Warn("page passed! property type is not house or vila", zap.String("passedURL", "https://divar.ir"+job.URL))
 				continue
 			}
 			// Save the scrape data to the database
-			if err := repositories.AddCrawlResult(&data); err != nil {
-				log.Fatalf("Failed to add scrape result: %v", err)
+			if id, err := repositories.CreateAd(&data, database.DB); err != nil {
+				log.Printf("Failed to add scrape result: %v", err)
+				crawlerLogger.Error("Failed to add scrape result:", zap.Error(err))
 			} else {
-				fmt.Println("Added to DB successfully!")
+				fmt.Println("Added to DB successfully!\n")
+				crawlerLogger.Info("added to db successfully", zap.String("ID", id))
 			}
 
 			// Increment the counter and check if we reached maxAdCount
@@ -51,12 +62,19 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync
 		case <-ctx.Done():
 			// Context canceled, exit worker
 			fmt.Println("Worker received shutdown signal, stopping...")
+			crawlerLogger.Info("worker received shutdown signal, stopping...")
 			return
 		}
 	}
 }
 
-func StartCrawler(ctx context.Context) {
+func StartDivarCrawler(ctx context.Context) {
+
+	configLogger := ctx.Value("configLogger").(cfg.ConfigLoggerType)
+	crawlerLogger, _ := configLogger("crawler")
+
+	crawlerLogger.Info("crawler started successfully")
+
 	jobs := make(chan divar.Job)
 	var wg sync.WaitGroup
 	defer wg.Wait()
@@ -64,7 +82,8 @@ func StartCrawler(ctx context.Context) {
 	// Get maxAdCount from environment
 	maxAdCount, err := strconv.Atoi(os.Getenv("MAX_AD_COUNT"))
 	if err != nil {
-		log.Fatalf("Error reading MAX_AD_COUNT from .env: %v", err)
+		log.Printf("Error reading MAX_AD_COUNT from .env: %v", err)
+		crawlerLogger.Error("Error reading MAX_AD_COUNT from .env:", zap.Error(err))
 	}
 
 	// Create a cancellable context for controlled shutdown
@@ -80,11 +99,12 @@ func StartCrawler(ctx context.Context) {
 	// Start a goroutine to fetch URLs and send them to the jobs channel
 	go func() {
 		defer close(jobs)
-		divar.CrawlDivarAds(ctx, "https://divar.ir/s/iran/buy-apartment", jobs)
+		divar.CrawlDivarAds(ctx, "https://divar.ir/s/iran/real-estate", jobs)
 	}()
 
 	// Wait for shutdown signal
 	<-ctx.Done()
 	fmt.Println("Received shutdown signal, closing down...")
+	crawlerLogger.Info("Received shutdown signal, closing down...")
 	return
 }

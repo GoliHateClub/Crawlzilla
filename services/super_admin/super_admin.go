@@ -2,13 +2,15 @@ package super_admin
 
 import (
 	"Crawlzilla/database/repositories"
-	"Crawlzilla/models/ads"
+	"Crawlzilla/models"
 	"errors"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 func IsSuperAdmin(userID int64) bool {
@@ -20,8 +22,8 @@ func IsSuperAdmin(userID int64) bool {
 	return superAdminId == userID
 }
 
-// ValidateCrawlResultData validates the data fields in a CrawlResult
-func ValidateCrawlResultData(result *ads.CrawlResult) error {
+// ValidateAdData validates the data fields in a Ads
+func ValidateAdData(result *models.Ads) error {
 	var validationErrors []string
 
 	// Field-specific validation
@@ -98,16 +100,16 @@ func validateURL(url string) error {
 }
 
 // AddAdForSuperAdmin attempts to save the ad, letting GORM handle model validation constraints
-func AddAdForSuperAdmin(result *ads.CrawlResult) error {
+func AddAdForSuperAdmin(result *models.Ads, database *gorm.DB) error {
 	if result == nil {
 		return fmt.Errorf("result cannot be nil")
 	}
 
-	if err := ValidateCrawlResultData(result); err != nil {
+	if err := ValidateAdData(result); err != nil {
 		return err
 	}
 
-	if err := repositories.AddCrawlResult(result); err != nil {
+	if _, err := repositories.CreateAd(result, database); err != nil {
 		log.Fatalf("Failed to add data: %v", err)
 	} else {
 		fmt.Println("Data has been added to the DB successfully!")
