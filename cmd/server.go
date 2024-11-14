@@ -1,6 +1,8 @@
 package main
 
 import (
+	"Crawlzilla/cmd/bot"
+	"Crawlzilla/cmd/crawler"
 	"context"
 	"fmt"
 	"log"
@@ -51,25 +53,29 @@ func main() {
 	defer wg.Wait()
 
 	// Start Crawler
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		fmt.Println("Starting Crawler...")
-		crawler.StartDivarCrawler(ctx)
-		fmt.Println("Crawler stopped.")
-	}()
+	if config.GetBoolean("IS_CRAWLER_ACTIVE") {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fmt.Println("Starting Crawler...")
+			crawler.StartDivarCrawler(ctx)
+			fmt.Println("Crawler stopped.")
+		}()
+	}
 
 	// Start Bot
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	fmt.Println("Starting Bot...")
-	// 	bot.StartBot(ctx)
-	// 	fmt.Println("Bot stopped.")
-	// }()
+	if config.GetBoolean("IS_BOT_ACTIVE") {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fmt.Println("Starting Bot...")
+			bot.StartBot(ctx)
+			fmt.Println("Bot stopped.")
+		}()
+	}
 
 	// Wait for shutdown signal
 	<-ctx.Done()
 	fmt.Println("Server received shutdown signal, waiting for components to stop...")
-	return
+	os.Exit(0)
 }
