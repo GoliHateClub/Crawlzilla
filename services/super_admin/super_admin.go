@@ -114,3 +114,21 @@ func AddAdForSuperAdmin(result *ads.CrawlResult) error {
 	}
 	return nil
 }
+
+// UpdateAdBySuperAdmin validates and updates an existing ad in the database
+func UpdateAdBySuperAdmin(id uint, updatedData *ads.CrawlResult) error {
+	if updatedData == nil {
+		return errors.New("updated data cannot be nil")
+	}
+
+	if err := ValidateCrawlResultData(updatedData); err != nil {
+		return err
+	}
+
+	if err := repositories.UpdateCrawlResultById(id, updatedData); err != nil {
+		return err
+	}
+
+	fmt.Println("Ad updated successfully!")
+	return nil
+}
