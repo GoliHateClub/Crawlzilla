@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Crawlzilla/cmd/bot"
 	"Crawlzilla/cmd/crawler"
 	"context"
 	"fmt"
@@ -12,7 +13,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"Crawlzilla/cmd/bot"
 	"Crawlzilla/config"
 	"Crawlzilla/database"
 	"Crawlzilla/logger"
@@ -63,13 +63,15 @@ func main() {
 	}
 
 	// Start Bot
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		fmt.Println("Starting Bot...")
-		bot.StartBot(ctx)
-		fmt.Println("Bot stopped.")
-	}()
+	if config.GetBoolean("IS_BOT_ACTIVE") {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fmt.Println("Starting Bot...")
+			bot.StartBot(ctx)
+			fmt.Println("Bot stopped.")
+		}()
+	}
 
 	// Wait for shutdown signal
 	<-ctx.Done()
