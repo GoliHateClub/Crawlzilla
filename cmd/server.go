@@ -1,8 +1,6 @@
 package main
 
 import (
-	"Crawlzilla/cmd/bot"
-	"Crawlzilla/cmd/crawler"
 	"context"
 	"fmt"
 	"log"
@@ -13,6 +11,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"Crawlzilla/cmd/bot"
 	"Crawlzilla/cmd/crawler"
 	"Crawlzilla/config"
 	"Crawlzilla/database"
@@ -77,5 +76,5 @@ func main() {
 	// Wait for shutdown signal
 	<-ctx.Done()
 	fmt.Println("Server received shutdown signal, waiting for components to stop...")
-	os.Exit(0)
+	return
 }
