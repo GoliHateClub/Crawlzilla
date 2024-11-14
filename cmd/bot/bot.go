@@ -5,6 +5,7 @@ import (
 	tgBot "Crawlzilla/services/bot"
 	"Crawlzilla/services/bot/handlers"
 	"context"
+	"log"
 )
 
 func StartBot(ctx context.Context) {
@@ -19,4 +20,10 @@ func StartBot(ctx context.Context) {
 	ctx = context.WithValue(ctx, "bot", bot)
 
 	handlers.Init(ctx)
+
+	// Wait for shutdown signal
+	<-ctx.Done()
+	botLogger.Info("Bot shutdown initiated.")
+	log.Println("Bot shutdown initiated.")
+	return
 }
