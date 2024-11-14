@@ -105,6 +105,6 @@ func CreateLogger(scopes ...string) ConfigLoggerType {
 }
 
 func ConfigLogger() ConfigLoggerType {
-	logConfig := CreateLogger("crawls", "bot", "database")
+	logConfig := CreateLogger("crawler", "bot", "database")
 	return logConfig
 }
