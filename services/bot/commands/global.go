@@ -19,11 +19,12 @@ func CommandStart(ctx context.Context, update tgbotapi.Update) {
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "سلام به بات ما خوش اومدی!")
 
-	msg.ReplyMarkup = keyboards.ReplyKeyboardMain(isAdmin)
+	msg.ReplyMarkup = keyboards.InlineKeyboard(menus.MainMenu, isAdmin)
 
 	_, err := bot.Send(msg)
 
 	if err != nil {
+		println(err.Error())
 		botLogger.Error("Error while sending welcome message.",
 			zap.Error(err), zap.String("user_id", strconv.Itoa(update.Message.From.ID)),
 		)
