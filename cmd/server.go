@@ -72,5 +72,5 @@ func main() {
 	// Wait for shutdown signal
 	<-ctx.Done()
 	fmt.Println("Server received shutdown signal, waiting for components to stop...")
-	return
+	os.Exit(0)
 }
