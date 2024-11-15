@@ -23,12 +23,11 @@ func TestCreateUser(t *testing.T) {
 
 	user := models.Users{
 		Telegram_ID: "test_telegram_id",
-		Role:        "admin",
 	}
 
-	err := repositories.CreateUser(db, &user)
+	role, err := repositories.CreateUser(db, user.Telegram_ID)
 	assert.NoError(t, err, "Creating user should not return an error")
-	assert.NotEmpty(t, user.ID, "User ID should be set")
+	assert.Equal(t, role, "user", "Role should match")
 }
 
 func TestGetUserByTelegramID(t *testing.T) {

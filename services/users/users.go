@@ -14,6 +14,11 @@ type PaginatedUsers struct {
 }
 
 // GetAllUsersPaginatedService retrieves all users with pagination and structures the output
+func LoginUser(db *gorm.DB, telegram_id string) (string, error) {
+	return repositories.CreateUser(db, telegram_id)
+}
+
+// GetAllUsersPaginatedService retrieves all users with pagination and structures the output
 func GetAllUsersPaginatedService(db *gorm.DB, page int, pageSize int) (PaginatedUsers, error) {
 	users, totalRecords, err := repositories.GetAllUsersPaginated(db, page, pageSize)
 	if err != nil {

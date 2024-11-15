@@ -24,8 +24,8 @@ func TestGetAllUsersPaginatedService(t *testing.T) {
 
 	// Insert test users
 	for i := 0; i < 25; i++ {
-		user := models.Users{Telegram_ID: "user_" + strconv.Itoa(i), Role: "user"}
-		repositories.CreateUser(db, &user)
+		user := models.Users{Telegram_ID: "user_" + strconv.Itoa(i)}
+		repositories.CreateUser(db, user.Telegram_ID)
 	}
 
 	// Test with page 1, page size 10
