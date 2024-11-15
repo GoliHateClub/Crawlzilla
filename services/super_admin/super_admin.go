@@ -33,6 +33,9 @@ func ValidateAdData(result *models.Ads) error {
 	if err := validateLocationURL(result.LocationURL); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
+	if err := validateURL(result.LocationURL); err != nil { // Use validateURL here
+		validationErrors = append(validationErrors, err.Error())
+	}
 	if err := validatePrice(result.Price); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
@@ -85,6 +88,17 @@ func validateCoordinates(lat, long float64) error {
 	return nil
 }
 
+// validateURL checks if the provided URL is a valid URL or not.
+func validateURL(url string) error {
+	if url == "" {
+		return errors.New("URL cannot be empty")
+	}
+	if len(url) > 255 {
+		return errors.New("URL length exceeds 255 characters")
+	}
+	return nil
+}
+
 // CreateAd attempts to save the ad, letting GORM handle model validation constraints
 func CreateAd(result *models.Ads, database *gorm.DB) error {
 	if result == nil {
@@ -100,5 +114,23 @@ func CreateAd(result *models.Ads, database *gorm.DB) error {
 	} else {
 		fmt.Println("Data has been added to the DB successfully!")
 	}
+	return nil
+}
+
+// RemoveAdByID removes an advertisement by its ID
+func RemoveAdByID(database *gorm.DB, id string) error {
+	ad, err := repositories.GetAdByID(database, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("ad not found")
+		}
+		return err
+	}
+
+	if err := repositories.DeleteAdById(database, ad.ID); err != nil {
+		return fmt.Errorf("failed to delete ad: %v", err)
+	}
+
+	log.Printf("Ad with ID %s successfully deleted", id)
 	return nil
 }

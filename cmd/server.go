@@ -29,7 +29,7 @@ func main() {
 	dbLogger, _ := configLogger("database")
 
 	/// Initialize the database
-	err := database.SetupDB()
+	_, err := database.SetupDB()
 	if err != nil {
 		dbLogger.Error("Database setup error", zap.Error(err))
 		return
