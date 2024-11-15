@@ -6,6 +6,7 @@ import (
 	"errors"
 	"math"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -101,16 +102,16 @@ func (s *FilterService) GetAllFilters(db *gorm.DB, userID string, pageIndex, pag
 		PageIndex:  pageIndex,
 	}, nil
 }
-func (s *FilterService) CreateOrUpdateFilter(db *gorm.DB, filter models.Filters) (bool, error) {
+func (s *FilterService) CreateOrUpdateFilter(db *gorm.DB, filter models.Filters) (string, error) {
 	// Step 1: Validate all fields
 	if err := s.validateFilterFields(filter); err != nil {
-		return false, err
+		return "", err
 	}
 
 	// Step 2: Check if the user exists
 	user, err := repositories.GetUserByID(db, filter.USER_ID)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
 	// Step 3: If the user does not exist, create a new user with "user" role
@@ -121,16 +122,58 @@ func (s *FilterService) CreateOrUpdateFilter(db *gorm.DB, filter models.Filters)
 			Role:        "user",
 		}
 		if err := repositories.CreateUser(db, newUser); err != nil {
-			return false, err
+			return "", err
 		}
 	}
 
-	// Step 4: Add the filter to the database
-	if err := s.filterRepo.CreateOrUpdateFilter(db, &filter); err != nil {
-		return false, err
+	// Step 4: Check if the filter already exists only if filter.ID is not empty
+	if filter.ID != "" {
+		var existingFilter models.Filters
+		if err := db.Where("id = ?", filter.ID).First(&existingFilter).Error; err == nil {
+			// If the filter exists, update its fields
+			existingFilter.City = filter.City
+			existingFilter.Neighborhood = filter.Neighborhood
+			existingFilter.Reference = filter.Reference
+			existingFilter.CategoryType = filter.CategoryType
+			existingFilter.PropertyType = filter.PropertyType
+			existingFilter.Sort = filter.Sort
+			existingFilter.Order = filter.Order
+			existingFilter.MinArea = filter.MinArea
+			existingFilter.MaxArea = filter.MaxArea
+			existingFilter.MinPrice = filter.MinPrice
+			existingFilter.MaxPrice = filter.MaxPrice
+			existingFilter.MinRent = filter.MinRent
+			existingFilter.MaxRent = filter.MaxRent
+			existingFilter.MinRoom = filter.MinRoom
+			existingFilter.MaxRoom = filter.MaxRoom
+			existingFilter.MinFloorNumber = filter.MinFloorNumber
+			existingFilter.MaxFloorNumber = filter.MaxFloorNumber
+			existingFilter.HasElevator = filter.HasElevator
+			existingFilter.HasStorage = filter.HasStorage
+			existingFilter.HasParking = filter.HasParking
+			existingFilter.HasBalcony = filter.HasBalcony
+
+			// Save the updated filter
+			if err := s.filterRepo.CreateOrUpdateFilter(db, &existingFilter); err != nil {
+				return "", err
+			}
+
+			return existingFilter.ID, nil // Return the updated filter ID
+		} else if err != gorm.ErrRecordNotFound {
+			// If there's another error (not ErrRecordNotFound), return it
+			return "", err
+		}
 	}
 
-	return true, nil
+	// Step 5: If filter.ID is empty or the filter does not exist, assign a new ID and create the filter
+	if filter.ID == "" {
+		filter.ID = uuid.NewString()
+	}
+	if err := s.filterRepo.CreateOrUpdateFilter(db, &filter); err != nil {
+		return "", err
+	}
+
+	return filter.ID, nil // Return the created filter ID
 }
 
 // RemoveFilter removes a filter based on the user's role and filter ownership

@@ -38,7 +38,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 	tests := []struct {
 		name    string
 		filter  models.Filters
-		want    bool
+		wantID  string // Expected filter ID
 		wantErr bool
 	}{
 		{
@@ -57,7 +57,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 				MinPrice:     1000,
 				MaxPrice:     5000,
 			},
-			want:    true,
+			wantID:  "", // We don’t expect a specific ID here, since it will be generated
 			wantErr: false,
 		},
 		{
@@ -68,7 +68,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 				MinArea:      100,
 				MaxArea:      200,
 			},
-			want:    true,
+			wantID:  "", // Expect a new ID to be generated
 			wantErr: false,
 		},
 		{
@@ -78,7 +78,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 				MinArea: 150,
 				MaxArea: 100,
 			},
-			want:    false,
+			wantID:  "", // Expect no ID since it’s invalid
 			wantErr: true,
 		},
 		{
@@ -88,7 +88,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 				MinPrice: -500,
 				MaxPrice: 1000,
 			},
-			want:    false,
+			wantID:  "", // Expect no ID since it’s invalid
 			wantErr: true,
 		},
 		{
@@ -98,7 +98,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 				MinPrice: 1000,
 				MaxPrice: 500,
 			},
-			want:    false,
+			wantID:  "", // Expect no ID since it’s invalid
 			wantErr: true,
 		},
 		{
@@ -107,7 +107,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 				MinPrice: 1000,
 				MaxPrice: 500,
 			},
-			want:    false,
+			wantID:  "", // Expect no ID since it’s invalid
 			wantErr: true,
 		},
 		{
@@ -119,7 +119,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 				MinPrice: 0,
 				MaxPrice: 1000,
 			},
-			want:    true,
+			wantID:  "", // Expect a new ID to be generated
 			wantErr: false,
 		},
 		{
@@ -127,7 +127,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 			filter: models.Filters{
 				USER_ID: "user-id-8",
 			},
-			want:    true,
+			wantID:  "", // Expect a new ID to be generated
 			wantErr: false,
 		},
 	}
@@ -135,17 +135,21 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 	// Run test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := s.CreateOrUpdateFilter(db, tt.filter)
+			gotID, err := s.CreateOrUpdateFilter(db, tt.filter)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FilterService.CreateOrUpdateFilter() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
-				t.Errorf("FilterService.CreateOrUpdateFilter() = %v, want %v", got, tt.want)
+			if !tt.wantErr && gotID == "" {
+				t.Error("FilterService.CreateOrUpdateFilter() returned an empty ID, expected a generated ID")
+			}
+			if tt.wantID != "" && gotID != tt.wantID {
+				t.Errorf("FilterService.CreateOrUpdateFilter() = %v, want %v", gotID, tt.wantID)
 			}
 		})
 	}
 }
+
 func TestFilterService_GetFiltersByUserID(t *testing.T) {
 	// Setup the test database
 	db, err := setupTestDB()
