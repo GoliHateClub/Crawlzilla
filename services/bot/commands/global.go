@@ -6,9 +6,8 @@ import (
 	"Crawlzilla/services/bot/menus"
 	"Crawlzilla/services/super_admin"
 	"context"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"go.uber.org/zap"
-	"strconv"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func CommandStart(ctx context.Context, update tgbotapi.Update) {

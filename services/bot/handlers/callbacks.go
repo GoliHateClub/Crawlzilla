@@ -4,7 +4,7 @@ import (
 	"Crawlzilla/services/bot/conversations"
 	"Crawlzilla/services/cache"
 	"context"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
@@ -29,5 +29,5 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 	}
 
 	// Acknowledge the callback to prevent the loading indicator
-	bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, "Action received"))
+	bot.Send(tgbotapi.NewCallback(update.CallbackQuery.ID, "Action received"))
 }

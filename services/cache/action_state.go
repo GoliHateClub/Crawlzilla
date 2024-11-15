@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/go-redis/redis/v8"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"go.uber.org/zap"
+	"log"
 	"strconv"
 )
 

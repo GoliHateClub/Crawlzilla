@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/go-redis/redis/v8"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"go.uber.org/zap"
+	"log"
 	"strconv"
 )
 
@@ -22,7 +24,7 @@ type UserState struct {
 
 func CreateNewUserState(conversation string, data *tgbotapi.CallbackQuery) UserState {
 	return UserState{
-		UserId:       int64(data.From.ID),
+		UserId:       data.From.ID,
 		ChatId:       data.Message.Chat.ID,
 		Conversation: conversation,
 		Stage:        "init",
