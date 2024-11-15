@@ -80,16 +80,3 @@ func DeleteAdById(database *gorm.DB, id string) error {
 	return database.Where("id = ?", id).Delete(&models.Ads{}, id).Error
 
 }
-
-// UpdateAdtById updates specific fields of an existing crawl result in the database
-func UpdateAdtById(id string, updatedData *models.Ads, database *gorm.DB) error {
-	if updatedData == nil {
-		return errors.New("updated data cannot be nil")
-	}
-
-	if err := database.Model(&models.Ads{}).Where("id = ?", id).Updates(updatedData).Error; err != nil {
-		return fmt.Errorf("failed to update ad: %v", err)
-	}
-
-	return nil
-}
