@@ -59,6 +59,8 @@
     > Remove ad by id.
   - `GetAdInfo(id stirng)` `Ad`, `error`
     > Get ad info by id. `visit_count++`
+- All users
+  - `GetAllAds(page int, pageSize int)` `struct{data []{title string, image string, id string, is_bookmard book}, pages int, page int}`, `error`
 
 ### Watchlist
 > //TODO

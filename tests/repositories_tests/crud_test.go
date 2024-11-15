@@ -62,10 +62,11 @@ func TestGetAllAds(t *testing.T) {
 	db.Create(&ad)
 
 	// Test case: Retrieve all ads
-	results, err := repositories.GetAllAds(db)
+	results, totalRecords, err := repositories.GetAllAds(db, 0, 1)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, results)
 	assert.Equal(t, "Sample Ad", results[0].Title)
+	assert.Equal(t, int64(1), totalRecords)
 }
 
 func TestGetAdByID(t *testing.T) {
