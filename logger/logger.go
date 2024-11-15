@@ -52,13 +52,16 @@ func CreateLogger(scopes ...string) ConfigLoggerType {
 	encoderCfg := zap.NewProductionEncoderConfig()
 	isDev := config.GetBoolean("DEV_MODE")
 
+	stdout := zapcore.AddSync(os.Stdout)
+	level := zap.NewAtomicLevelAt(zap.InfoLevel)
+
 	encoderCfg.TimeKey = "timestamp"
 	encoderCfg.EncodeTime = zapcore.RFC3339TimeEncoder
 
 	writeSyncerMap := NewWriteSyncerMap()
 
 	zapConfig := zap.Config{
-		Level:             zap.NewAtomicLevelAt(zap.InfoLevel),
+		Level:             level,
 		Development:       isDev,
 		DisableCaller:     false,
 		DisableStacktrace: false,
@@ -77,6 +80,11 @@ func CreateLogger(scopes ...string) ConfigLoggerType {
 	// Create a base logger
 	baseLogger := zap.Must(zapConfig.Build())
 
+	// Create console encoder
+	developmentCfg := zap.NewDevelopmentEncoderConfig()
+	developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	consoleEncoder := zapcore.NewConsoleEncoder(developmentCfg)
+
 	// Create a composite logger core
 	loggers := make(map[string]*zap.Logger)
 
@@ -84,6 +92,7 @@ func CreateLogger(scopes ...string) ConfigLoggerType {
 		loggers[scope] = baseLogger.WithOptions(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
 			return zapcore.NewTee(
 				c,
+				zapcore.NewCore(consoleEncoder, stdout, level),
 				zapcore.NewCore(
 					zapcore.NewJSONEncoder(encoderCfg),
 					writeSyncerMap.GetWriteSyncer(scope),

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	cfg "Crawlzilla/logger"
+	"Crawlzilla/services/bot/conversations"
 	"Crawlzilla/services/bot/keyboards"
 	"Crawlzilla/services/bot/menus"
 	"Crawlzilla/services/cache"
@@ -30,11 +31,16 @@ func HandleConversation(ctx context.Context, update tgbotapi.Update) {
 		)
 	}
 
-	switch userState {
-	case "":
+	if userState == (cache.State{}) {
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "متوجه منظورت نشدم!. از منو زیر استفاده کن.")
 		isAdmin := super_admin.IsSuperAdmin(int64(update.Message.From.ID))
 		msg.ReplyMarkup = keyboards.InlineKeyboard(menus.MainMenu, isAdmin)
 		bot.Send(msg)
+		return
+	}
+
+	switch userState.Conversation {
+	case "add_ad":
+		conversations.AddAdConversation(ctx, userState, update)
 	}
 }

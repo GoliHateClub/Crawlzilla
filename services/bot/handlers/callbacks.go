@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"Crawlzilla/services/bot/conversations"
+	"Crawlzilla/services/cache"
 	"context"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -16,7 +18,7 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 	case "/remove_admin":
 		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
 	case "/add_ad":
-		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
+		conversations.AddAdConversation(ctx, cache.CreateNewState("add_ad", update.CallbackQuery), update)
 	case "/remove_ad":
 		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
 	case "/update_ad":
