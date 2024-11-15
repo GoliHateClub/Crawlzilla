@@ -39,7 +39,7 @@ func TestCreateAd(t *testing.T) {
 	}
 
 	// Test case 1: Successfully add an ad
-	id, err := repositories.CreateAd(&ad, db)
+	id, err := repositories.CreateAd(db, &ad)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, id)
 
@@ -48,7 +48,7 @@ func TestCreateAd(t *testing.T) {
 		Title: ad.Title,
 		// Hash:  ad.Hash, // Manually set to the same hash to simulate duplication
 	}
-	_, err = repositories.CreateAd(&adDuplicate, db)
+	_, err = repositories.CreateAd(db, &adDuplicate)
 	assert.Error(t, err)
 	assert.Equal(t, "cant't add to database", err.Error())
 }
@@ -72,17 +72,18 @@ func TestGetAllAds(t *testing.T) {
 func TestGetAdByID(t *testing.T) {
 	// Set up the test database
 	db := SetupTestDB()
-	defer db.Exec("DROP TABLE ads;")
+	defer func() { _ = db.Exec("DROP TABLE ads;") }()
 
 	// Add a sample ad to the database
-	ad := models.Ads{Title: "Sample Ad"}
-	id, err := repositories.CreateAd(&ad, db)
+	ad := models.Ads{Title: "Sample Ad", VisitCount: 0}
+	err := db.Create(&ad).Error
 	assert.NoError(t, err, "Expected no error when creating ad")
 
 	// Test case 1: Retrieve an existing ad by ID
-	result, err := repositories.GetAdByID(db, `"`+id+`"`) // Wrap ID in quotes
+	result, err := repositories.GetAdByID(db, ad.ID)
 	assert.NoError(t, err, "Expected no error when retrieving an existing ad")
 	assert.Equal(t, "Sample Ad", result.Title, "Expected title to match the inserted ad")
+	assert.Equal(t, 1, result.VisitCount, "Expected visit_count to be incremented")
 
 	// Test case 2: Retrieve a non-existent ad by ID
 	nonExistentID := "00000000-0000-0000-0000-000000000000" // A valid but non-existent UUID
@@ -97,7 +98,7 @@ func TestDeleteAdById(t *testing.T) {
 
 	// Add a sample ad to the database
 	ad := models.Ads{Title: "Sample Ad"}
-	id, err := repositories.CreateAd(&ad, db)
+	id, err := repositories.CreateAd(db, &ad)
 
 	// Test case: Delete the ad by ID
 	err = repositories.DeleteAdById(db, `"`+id+`"`)

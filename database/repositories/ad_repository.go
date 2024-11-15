@@ -9,7 +9,7 @@ import (
 )
 
 // AddAd adds a new scrap result to the database if it doesn't already exist
-func CreateAd(result *models.Ads, database *gorm.DB) (string, error) {
+func CreateAd(database *gorm.DB, result *models.Ads) (string, error) {
 	// Manually call BeforeCreate to generate the hash before querying the database
 	if err := result.BeforeCreate(database); err != nil {
 		return "", fmt.Errorf("failed to generate hash: %v", err)
@@ -58,12 +58,20 @@ func GetAllAds(db *gorm.DB, page int, pageSize int) ([]models.AdSummary, int64, 
 // GetAdByID retrieves a scrap result by ID
 func GetAdByID(database *gorm.DB, id string) (models.Ads, error) {
 	var result models.Ads
+
+	// Fetch the ad by ID
 	err := database.Where("id = ?", id).First(&result).Error
 	if err != nil {
 		return result, err
 	}
-	err = database.Model(&models.Ads{}).Where("id = ?", id).UpdateColumn("visit_count", gorm.Expr("visit_count + ?", 1)).Error
 
+	// Increment the visit_count column
+	if err := database.Model(&models.Ads{}).Where("id = ?", id).UpdateColumn("visit_count", gorm.Expr("visit_count + ?", 1)).Error; err != nil {
+		return result, err
+	}
+
+	// Fetch the updated record to include the incremented visit_count
+	err = database.Where("id = ?", id).First(&result).Error
 	return result, err
 }
 
