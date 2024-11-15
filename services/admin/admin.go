@@ -16,3 +16,18 @@ func CreateAdminUser(db *gorm.DB, telegramID string) (models.Role, error) {
 
 	return userRole, nil
 }
+
+// IsAdmin checks if the user with the given ID is an admin
+func IsAdmin(db *gorm.DB, userID string) (bool, error) {
+	user, err := repositories.GetUserByID(db, userID)
+	if err != nil {
+		return false, err
+	}
+	if user == nil {
+		return false, nil
+	}
+	if user.Role == models.RoleAdmin {
+		return true, nil
+	}
+	return false, nil
+}
