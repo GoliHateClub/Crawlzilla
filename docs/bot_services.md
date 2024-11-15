@@ -27,10 +27,12 @@
     > Gives role of existed users or add user if not
     
 ### Filter
-- Super User, Admins 
-  - `GetAllFilters(role ADMIN|SUPER_ADMIN|NORMAL_USER)` `struct{data []FilterData, pages int, page int}`, `error`
-    > Get all filer data. Filter Data is list of filters. Admins only can see filters info but super admins can see which user created that filter too
+- Super User, Admins
+  - `GetAllFilters(id int64)` `struct{data []FilterData, pages int, page int}`, `error`
+    > Get all users filter data. Filter Data is list of filters. Admins only can see filters info but super admins can see which user created that filter too
 - All Users
+  - `GetMyFilters(id int64)` `struct{data []FilterData, pages int, page int}`, `error`
+    > Get all filters of a specific user
   - `CreateOrUpdateFilter(filter Filter)` `bool`, `error`
     > Create new filter.
   - `RemoveFilter(id string)` `bool`, `error`

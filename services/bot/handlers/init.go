@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"Crawlzilla/services/cache"
 	"context"
 	"log"
 
@@ -23,6 +24,10 @@ func Init(ctx context.Context) {
 		log.Println("Bot instance is missing in context.")
 		return
 	}
+
+	state := cache.CreateUserStateCache(ctx)
+	ctx = context.WithValue(ctx, "state", state)
+
 	u := tgbotapi.NewUpdate(Configuration.NewUpdateOffset)
 	u.Timeout = Configuration.Timeout
 
