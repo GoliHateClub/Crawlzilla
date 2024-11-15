@@ -22,6 +22,9 @@ Telegram bot commands
     > Get all user info with pagination
 
 ### Filters
+- Super Admin
+  - `/all_filters`
+    > See all users filter
 - All Users
   - `/filters`
     > Show all filters
