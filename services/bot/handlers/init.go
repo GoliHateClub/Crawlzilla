@@ -44,7 +44,6 @@ func Init(ctx context.Context) {
 			case update, ok := <-updates:
 				if !ok {
 					log.Println("Updates channel closed.")
-					return
 				}
 
 				if update.Message != nil && update.Message.IsCommand() {
@@ -52,7 +51,7 @@ func Init(ctx context.Context) {
 				}
 
 				// Handle messages in conversation
-				if update.Message != nil {
+				if update.Message != nil && !update.Message.IsCommand() {
 					HandleConversation(ctx, update)
 				}
 
