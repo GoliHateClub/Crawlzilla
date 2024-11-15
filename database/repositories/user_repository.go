@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"Crawlzilla/models"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -11,11 +12,16 @@ func CreateUser(db *gorm.DB, user *models.Users) error {
 	return db.Create(user).Error
 }
 
-// GetUserByTelegramID retrieves a user by their Telegram ID
-func GetUserByTelegramID(db *gorm.DB, telegramID string) (models.Users, error) {
+// GetUserByID retrieves a user by their Telegram ID
+func GetUserByID(db *gorm.DB, userID string) (*models.Users, error) {
 	var user models.Users
-	err := db.Where("telegram_id = ?", telegramID).First(&user).Error
-	return user, err
+	if err := db.Where("id = ?", userID).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
 }
 
 // GetAllUsersPaginated retrieves users with pagination
