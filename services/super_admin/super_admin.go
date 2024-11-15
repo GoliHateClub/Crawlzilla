@@ -99,8 +99,8 @@ func validateURL(url string) error {
 	return nil
 }
 
-// AddAdForSuperAdmin attempts to save the ad, letting GORM handle model validation constraints
-func AddAdForSuperAdmin(result *models.Ads, database *gorm.DB) error {
+// CreateAd attempts to save the ad, letting GORM handle model validation constraints
+func CreateAd(result *models.Ads, database *gorm.DB) error {
 	if result == nil {
 		return fmt.Errorf("result cannot be nil")
 	}
@@ -109,7 +109,7 @@ func AddAdForSuperAdmin(result *models.Ads, database *gorm.DB) error {
 		return err
 	}
 
-	if _, err := repositories.CreateAd(result, database); err != nil {
+	if _, err := repositories.CreateAd(database, result); err != nil {
 		log.Fatalf("Failed to add data: %v", err)
 	} else {
 		fmt.Println("Data has been added to the DB successfully!")

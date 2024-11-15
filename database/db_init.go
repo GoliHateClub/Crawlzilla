@@ -6,6 +6,7 @@ import (
 
 	"Crawlzilla/models"
 
+	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -27,10 +28,31 @@ func SetupDB() error {
 		log.Fatalf("failed to connect to the database: %v", err)
 	}
 
-	// Run migrations for the Ads model
-	err = db.AutoMigrate(&models.Ads{})
+	// Run migrations for the Ads, Filters, and Users models
+	err = db.AutoMigrate(&models.Ads{}, &models.Filters{}, &models.Users{})
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
+	// Check if Super Admin exists, and create one if not
+	var count int64
+	err = db.Model(&models.Users{}).Where("role = ?", "super-admin").Count(&count).Error
+	if err != nil {
+		log.Fatalf("Failed to check for initial user: %v", err)
+	}
+	super_admin_id := os.Getenv("SUPER_ADMIN_ID")
+	// If no user found with the 'super-admin' role, create an initial super-admin
+	if count == 0 && super_admin_id != "" {
+		initialUser := models.Users{
+			ID:          uuid.NewString(),
+			Telegram_ID: super_admin_id,
+			Role:        "super-admin",
+		}
+		err = db.Create(&initialUser).Error
+		if err != nil {
+			log.Fatalf("Failed to create initial admin user: %v", err)
+		}
+		log.Println("Initial admin user created")
 	}
 
 	DB = db

@@ -22,12 +22,17 @@
     > Get admin id and remove it from admins
   - `GetAllUsersInfo()` `struct{data []User, pages int, page int}`, `error`
     > Get all users info in system with pagination
+- All Users
+  - ✅`LoginUser(db *gorm.DB, telegram_id string)`, ` (role string, error)`
+    > Gives role of existed users or add user if not
     
 ### Filter
-- Super User, Admins 
-  - `GetAllFilters(role ADMIN|SUPER_ADMIN|NORMAL_USER)` `struct{data []FilterData, pages int, page int}`, `error`
-    > Get all filer data. Filter Data is list of filters. Admins only can see filters info but super admins can see which user created that filter too
+- Super User, Admins
+  - `GetAllFilters(id int64)` `struct{data []FilterData, pages int, page int}`, `error`
+    > Get all users filter data. Filter Data is list of filters. Admins only can see filters info but super admins can see which user created that filter too
 - All Users
+  - `GetMyFilters(id int64)` `struct{data []FilterData, pages int, page int}`, `error`
+    > Get all filters of a specific user
   - `CreateOrUpdateFilter(filter Filter)` `bool`, `error`
     > Create new filter.
   - `RemoveFilter(id string)` `bool`, `error`
@@ -55,8 +60,11 @@
     > Update an ad.
   - `RemoveAd(id string)` `bool`, `error`
     > Remove ad by id.
-  - `GetAdInfo(id stirng)` `Ad`, `error`
+  - `GetAdById(db,id stirng)` `Ad`, `error`
     > Get ad info by id. `visit_count++`
+- All users
+  - ✅`GetAllAds(page int, pageSize int)` `struct{data []{title string, image string, id string, is_bookmard book}, pages int, page int}`, `error`
+  - ✅`GetAdById(db,id stirng)` `Ad`, `error`
 
 ### Watchlist
 > //TODO

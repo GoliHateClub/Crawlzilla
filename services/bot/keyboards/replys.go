@@ -1,12 +1,11 @@
 package keyboards
 
 import (
-	"Crawlzilla/services/bot"
+	"Crawlzilla/services/bot/menus"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-func ReplyKeyboardMain(isAdmin bool) tgbotapi.InlineKeyboardMarkup {
-	menu := bot.MainMenu
+func InlineKeyboard(menu [][]menus.MenuItem, isAdmin bool) tgbotapi.InlineKeyboardMarkup {
 	var keyboardRows [][]tgbotapi.InlineKeyboardButton
 
 	for _, items := range menu {

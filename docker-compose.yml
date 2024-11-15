@@ -1,11 +1,20 @@
 services:
-  db:
-    container_name: postgres_db
+  crawlzilla-redis:
+    image: redis/redis-stack:latest
+    container_name: crawlzilla-redis
+    ports:
+      - "8003:8001"
+      - "6380:6379"
+    volumes:
+      - crawlzilla-redis-volume:/data
+
+  crawlzilla-db:
+    container_name: crawlzilla-db
     image: postgres:latest
     restart: always
     env_file: .env
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - crawlzilla-db-volume:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}
@@ -19,4 +28,5 @@ services:
       retries: 5
 
 volumes:
-  db-data:
+  crawlzilla-db-volume:
+  crawlzilla-redis-volume:

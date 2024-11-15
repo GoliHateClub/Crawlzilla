@@ -16,8 +16,15 @@ Telegram bot commands
     > Add new admin to admin list
   - `/remove_admin`
     > Remove admin from admin list
+  - `/get_admin`
+    > Return admin info
+  - `/get_all_users`
+    > Get all user info with pagination
 
 ### Filters
+- Super Admin
+  - `/all_filters`
+    > See all users filter
 - All Users
   - `/filters`
     > Show all filters
@@ -37,5 +44,5 @@ Telegram bot commands
   - `/update_ad`
     > Update ad information in database
 - All users
-  - `/see_all_ads`
+  - `/search`
     > Show adds with pagination

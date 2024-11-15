@@ -132,7 +132,7 @@ func TestAddAdForSuperAdmin(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Call the function with the mock database
-			err := super_admin.AddAdForSuperAdmin(tt.result, db)
+			err := super_admin.CreateAd(tt.result, db)
 			if (err != nil) != tt.expectErr {
 				t.Errorf("AddAdForSuperAdmin() error = %v, wantErr %v", err, tt.expectErr)
 			}
