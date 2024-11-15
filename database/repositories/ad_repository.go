@@ -77,6 +77,5 @@ func GetAdByID(database *gorm.DB, id string) (models.Ads, error) {
 
 // DeleteAdById deletes a scrap result by ID
 func DeleteAdById(database *gorm.DB, id string) error {
-	return database.Where("id = ?", id).Delete(&models.Ads{}, id).Error
-
+	return database.Where("id = ?", id).Delete(&models.Ads{}).Error
 }

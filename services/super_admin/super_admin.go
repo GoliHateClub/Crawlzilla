@@ -118,18 +118,19 @@ func CreateAd(result *models.Ads, database *gorm.DB) error {
 }
 
 // RemoveAdByID removes an advertisement by its ID
-func RemoveAdByID(id string, database *gorm.DB) error {
-	var ad models.Ads
-	if err := database.First(&ad, "id = ?", id).Error; err != nil {
+func RemoveAdByID(database *gorm.DB, id string) error {
+	ad, err := repositories.GetAdByID(database, id)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("ad not found")
+			return fmt.Errorf("ad not found")
 		}
 		return err
 	}
 
-	if err := database.Delete(&ad).Error; err != nil {
-		return err
+	if err := repositories.DeleteAdById(database, ad.ID); err != nil {
+		return fmt.Errorf("failed to delete ad: %v", err)
 	}
 
+	log.Printf("Ad with ID %s successfully deleted", id)
 	return nil
 }
