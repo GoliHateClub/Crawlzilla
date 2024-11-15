@@ -44,7 +44,7 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync
 				continue
 			}
 			// Save the scrape data to the database
-			if id, err := repositories.CreateAd(&data, database.DB); err != nil {
+			if id, err := repositories.CreateAd(database.DB, &data); err != nil {
 				log.Printf("Failed to add scrape result: %v", err)
 				crawlerLogger.Error("Failed to add scrape result:", zap.Error(err))
 			} else {
