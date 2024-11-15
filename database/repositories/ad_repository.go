@@ -59,6 +59,11 @@ func GetAllAds(db *gorm.DB, page int, pageSize int) ([]models.AdSummary, int64, 
 func GetAdByID(database *gorm.DB, id string) (models.Ads, error) {
 	var result models.Ads
 	err := database.Where("id = ?", id).First(&result).Error
+	if err != nil {
+		return result, err
+	}
+	err = database.Model(&models.Ads{}).Where("id = ?", id).UpdateColumn("visit_count", gorm.Expr("visit_count + ?", 1)).Error
+
 	return result, err
 }
 
