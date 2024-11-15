@@ -41,7 +41,7 @@ func TestGetUserByTelegramID(t *testing.T) {
 	}
 	db.Create(&user)
 
-	retrievedUser, err := repositories.GetUserByTelegramID(db, "test_telegram_id")
+	retrievedUser, err := repositories.GetUserByID(db, "test_telegram_id")
 	assert.NoError(t, err, "Retrieving user should not return an error")
 	assert.Equal(t, user.Telegram_ID, retrievedUser.Telegram_ID, "Telegram ID should match")
 }
