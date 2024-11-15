@@ -117,20 +117,19 @@ func CreateAd(result *models.Ads, database *gorm.DB) error {
 	return nil
 }
 
-// UpdateAd validates and updates an existing ad in the database
-func UpdateAd(id string, updatedData *models.Ads, database *gorm.DB) error {
-	if updatedData == nil {
-		return errors.New("updated data cannot be nil")
-	}
-
-	if err := ValidateAdData(updatedData); err != nil {
+// RemoveAdByID removes an advertisement by its ID
+func RemoveAdByID(id string, database *gorm.DB) error {
+	var ad models.Ads
+	if err := database.First(&ad, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("ad not found")
+		}
 		return err
 	}
 
-	if err := repositories.UpdateAdtById(id, updatedData, database); err != nil {
+	if err := database.Delete(&ad).Error; err != nil {
 		return err
 	}
 
-	fmt.Println("Ad updated successfully!")
 	return nil
 }
