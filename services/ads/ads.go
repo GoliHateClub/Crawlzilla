@@ -32,3 +32,7 @@ func GetAllAds(db *gorm.DB, page int, pageSize int) (AdData, error) {
 		Page:  page,
 	}, nil
 }
+
+func GetAdById(db *gorm.DB, id string) (models.Ads, error) {
+	return repositories.GetAdByID(db, id)
+}

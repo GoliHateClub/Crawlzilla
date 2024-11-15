@@ -80,13 +80,13 @@ func TestGetAdByID(t *testing.T) {
 	assert.NoError(t, err, "Expected no error when creating ad")
 
 	// Test case 1: Retrieve an existing ad by ID
-	result, err := repositories.GetAdByID(`"`+id+`"`, db) // Wrap ID in quotes
+	result, err := repositories.GetAdByID(db, `"`+id+`"`) // Wrap ID in quotes
 	assert.NoError(t, err, "Expected no error when retrieving an existing ad")
 	assert.Equal(t, "Sample Ad", result.Title, "Expected title to match the inserted ad")
 
 	// Test case 2: Retrieve a non-existent ad by ID
 	nonExistentID := "00000000-0000-0000-0000-000000000000" // A valid but non-existent UUID
-	_, err = repositories.GetAdByID(nonExistentID, db)
+	_, err = repositories.GetAdByID(db, nonExistentID)
 	assert.Error(t, err, "Expected an error when retrieving a non-existent ad")
 	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound), "Expected gorm.ErrRecordNotFound error")
 }
@@ -100,11 +100,11 @@ func TestDeleteAdById(t *testing.T) {
 	id, err := repositories.CreateAd(&ad, db)
 
 	// Test case: Delete the ad by ID
-	err = repositories.DeleteAdById(`"`+id+`"`, db)
+	err = repositories.DeleteAdById(db, `"`+id+`"`)
 	assert.NoError(t, err)
 
 	// Verify that the ad is deleted
-	_, err = repositories.GetAdByID(`"`+ad.ID+`"`, db)
+	_, err = repositories.GetAdByID(db, `"`+ad.ID+`"`)
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
 }

@@ -56,13 +56,13 @@ func GetAllAds(db *gorm.DB, page int, pageSize int) ([]models.AdSummary, int64, 
 }
 
 // GetAdByID retrieves a scrap result by ID
-func GetAdByID(id string, database *gorm.DB) (models.Ads, error) {
+func GetAdByID(database *gorm.DB, id string) (models.Ads, error) {
 	var result models.Ads
-	err := database.First(&result, id).Error
+	err := database.Where("id = ?", id).First(&result).Error
 	return result, err
 }
 
 // DeleteAd deletes a scrap result by ID
-func DeleteAdById(id string, database *gorm.DB) error {
-	return database.Delete(&models.Ads{}, id).Error
+func DeleteAdById(database *gorm.DB, id string) error {
+	return database.Where("id = ?", id).Delete(&models.Ads{}, id).Error
 }
