@@ -121,7 +121,7 @@ func (s *FilterService) CreateOrUpdateFilter(db *gorm.DB, filter models.Filters)
 			Telegram_ID: "", // Set Telegram_ID as needed
 			Role:        "user",
 		}
-		if err := repositories.CreateUser(db, newUser); err != nil {
+		if _, err := repositories.CreateUser(db, newUser.Telegram_ID); err != nil {
 			return "", err
 		}
 	}
