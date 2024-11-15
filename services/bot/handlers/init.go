@@ -25,8 +25,10 @@ func Init(ctx context.Context) {
 		return
 	}
 
-	state := cache.CreateUserStateCache(ctx)
-	ctx = context.WithValue(ctx, "state", state)
+	userState := cache.CreateUserCache(ctx)
+	actionState := cache.CreateActionCache(ctx)
+	ctx = context.WithValue(ctx, "user_state", userState)
+	ctx = context.WithValue(ctx, "action_state", actionState)
 
 	u := tgbotapi.NewUpdate(Configuration.NewUpdateOffset)
 	u.Timeout = Configuration.Timeout
