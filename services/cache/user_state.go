@@ -2,14 +2,31 @@ package cache
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/go-redis/redis/v8"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"strconv"
-	"time"
 )
 
 type UserState struct {
 	redis *redis.Client
+}
+
+type State struct {
+	Conversation string
+	Stage        string
+	UserId       int64
+	ChatId       int64
+}
+
+func CreateNewState(conversation string, data *tgbotapi.CallbackQuery) State {
+	return State{
+		UserId:       int64(data.From.ID),
+		ChatId:       data.Message.Chat.ID,
+		Conversation: conversation,
+		Stage:        "init",
+	}
 }
 
 func CreateUserStateCache(ctx context.Context) *UserState {
@@ -20,18 +37,32 @@ func CreateUserStateCache(ctx context.Context) *UserState {
 	}
 }
 
-func (s *UserState) SetUserState(ctx context.Context, chatID int64, state string) error {
+func (s *UserState) SetUserState(ctx context.Context, chatID int64, state State) error {
 	key := getStateKey(chatID)
-	return s.redis.Set(ctx, key, state, time.Hour).Err()
+
+	marshal, err := json.Marshal(state)
+
+	if err != nil {
+		return err
+	}
+
+	return s.redis.Set(ctx, key, marshal, 0).Err()
 }
 
-func (s *UserState) GetUserState(ctx context.Context, chatID int64) (string, error) {
+func (s *UserState) GetUserState(ctx context.Context, chatID int64) (State, error) {
 	key := getStateKey(chatID)
-	state, err := s.redis.Get(ctx, key).Result()
+	stateStr, err := s.redis.Get(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
-		return "", nil
+		return State{}, nil
 	}
-	return state, err
+
+	var state State
+	err = json.Unmarshal([]byte(stateStr), &state)
+	if err != nil {
+		return State{}, err
+	}
+
+	return state, nil
 }
 
 func (s *UserState) ClearUserState(ctx context.Context, chatID int64) error {
