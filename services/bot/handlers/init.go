@@ -5,7 +5,7 @@ import (
 	"context"
 	"log"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type ConfigurationType struct {
@@ -33,11 +33,7 @@ func Init(ctx context.Context) {
 	u := tgbotapi.NewUpdate(Configuration.NewUpdateOffset)
 	u.Timeout = Configuration.Timeout
 
-	updates, err := bot.GetUpdatesChan(u)
-	if err != nil {
-		log.Printf("Error retrieving updates: %v", err)
-		return
-	}
+	updates := bot.GetUpdatesChan(u)
 
 	go func() {
 		for {

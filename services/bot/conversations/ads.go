@@ -11,7 +11,7 @@ import (
 	"strconv"
 
 	cfg "Crawlzilla/logger"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func AddAdConversation(ctx context.Context, state cache.UserState, update tgbotapi.Update) {

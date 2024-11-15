@@ -2,7 +2,7 @@ package keyboards
 
 import (
 	"Crawlzilla/services/bot/menus"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func InlineKeyboard(menu [][]menus.MenuItem, isAdmin bool) tgbotapi.InlineKeyboardMarkup {
