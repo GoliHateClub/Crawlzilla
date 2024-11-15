@@ -17,7 +17,7 @@ type FilterData struct {
 // GetAllFilters retrieves paginated filters with role-based visibility
 func GetAllFilters(db *gorm.DB, page int, pageSize int, role string) (FilterData, error) {
 	// SuperAdmin can see user information, while Admin and NormalUser cannot
-	includeUserData := (role == "SUPER_ADMIN")
+	includeUserData := (role == "super-admin")
 
 	// Fetch filters with pagination
 	filters, totalRecords, err := repositories.GetAllFiltersPaginated(db, page, pageSize, includeUserData)
