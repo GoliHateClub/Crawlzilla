@@ -15,7 +15,7 @@ import (
 var DB *gorm.DB
 
 // SetupDB initializes and returns a database connection
-func SetupDB() error {
+func SetupDB() (*gorm.DB, error) {
 	// Retrieve the database URL from environment variables
 	databaseURL := os.Getenv("DB_URL")
 	if databaseURL == "" {
@@ -56,5 +56,5 @@ func SetupDB() error {
 	}
 
 	DB = db
-	return nil
+	return db, nil
 }

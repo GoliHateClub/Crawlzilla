@@ -117,17 +117,17 @@ func CreateAd(result *models.Ads, database *gorm.DB) error {
 	return nil
 }
 
-// UpdateAdBySuperAdmin validates and updates an existing ad in the database
-func UpdateAdBySuperAdmin(id uint, updatedData *ads.CrawlResult) error {
+// UpdateAd validates and updates an existing ad in the database
+func UpdateAd(id string, updatedData *models.Ads, database *gorm.DB) error {
 	if updatedData == nil {
 		return errors.New("updated data cannot be nil")
 	}
 
-	if err := ValidateCrawlResultData(updatedData); err != nil {
+	if err := ValidateAdData(updatedData); err != nil {
 		return err
 	}
 
-	if err := repositories.UpdateCrawlResultById(id, updatedData); err != nil {
+	if err := repositories.UpdateAdtById(id, updatedData, database); err != nil {
 		return err
 	}
 
