@@ -37,11 +37,22 @@ func CreateAd(result *models.Ads, database *gorm.DB) (string, error) {
 	return "", err
 }
 
-// GetAllAds retrieves all scrap results
-func GetAllAds(database *gorm.DB) ([]models.Ads, error) {
-	var results []models.Ads
-	err := database.Find(&results).Error
-	return results, err
+// GetAllAdsPaginated retrieves ads with pagination and selects specific fields
+func GetAllAds(db *gorm.DB, page int, pageSize int) ([]models.AdSummary, int64, error) {
+	var ads []models.AdSummary
+	var totalRecords int64
+
+	// Count total records for pagination info
+	if err := db.Model(&models.Ads{}).Count(&totalRecords).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Calculate offset based on page and pageSize
+	offset := (page - 1) * pageSize
+
+	// Retrieve paginated records with specific fields
+	err := db.Model(&models.Ads{}).Select("ID", "Title", "ImageURL").Offset(offset).Limit(pageSize).Find(&ads).Error
+	return ads, totalRecords, err
 }
 
 // GetAdByID retrieves a scrap result by ID

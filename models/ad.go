@@ -9,6 +9,13 @@ import (
 	"gorm.io/gorm"
 )
 
+// AdSummary represents a lightweight ad with only the necessary fields
+type AdSummary struct {
+	ID       string `json:"id"`
+	Title    string `json:"title"`
+	ImageURL string `json:"image_url"`
+}
+
 // Ads struct definition as before
 type Ads struct {
 	ID            string  `gorm:"type:uuid;primary_key;"`
