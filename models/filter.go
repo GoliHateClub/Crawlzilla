@@ -32,6 +32,5 @@ type Filters struct {
 func (c *Filters) BeforeCreate(tx *gorm.DB) (err error) {
 	// Set the ID to a new UUID
 	c.ID = uuid.NewString()
-
-	return err
+	return nil
 }

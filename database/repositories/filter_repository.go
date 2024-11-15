@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"Crawlzilla/models"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -31,21 +32,28 @@ func GetAllFiltersPaginated(db *gorm.DB, page int, pageSize int, includeUserData
 
 // CreateOrUpdateFilter creates a new filter or updates an existing one based on the ID
 func CreateOrUpdateFilter(db *gorm.DB, filter *models.Filters) (bool, error) {
-	// Fetch the existing filter using the ID; if none found, GORM will automatically insert a new record.
-	tx := db.Where("id = ?", filter.ID).FirstOrCreate(&filter)
-
-	if tx.Error != nil {
-		return false, tx.Error
-	}
-
-	if tx.RowsAffected == 0 {
-		// The filter was found, and no new row was created; update the existing record.
-		if err := db.Save(filter).Error; err != nil {
+	if filter.ID == "" {
+		// No ID provided, create a new filter
+		if err := db.Create(filter).Error; err != nil {
 			return false, err
 		}
-		return true, nil // Updated existing filter
+		return true, nil // Created new filter
 	}
-	return true, nil // Created new filter, or updated existing one without changes
+
+	// ID is provided, try to find the existing filter by ID
+	var existingFilter models.Filters
+	if err := db.Where("id = ?", filter.ID).First(&existingFilter).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return false, fmt.Errorf("id is not found: %v", err) // Created new filter
+		}
+		return false, err // An unexpected error occurred
+	}
+
+	// Record exists, update it
+	if err := db.Model(&existingFilter).Updates(filter).Error; err != nil {
+		return false, err
+	}
+	return true, nil // Updated existing filter
 }
 
 // RemoveFilter removes a filter by its ID
