@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"Crawlzilla/models"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -10,6 +11,8 @@ type FilterRepository interface {
 	CreateOrUpdateFilter(db *gorm.DB, filter *models.Filters) error
 	GetFiltersByUserID(db *gorm.DB, userID string, pageIndex, pageSize int) ([]models.Filters, int64, error)
 	GetFiltersForAllUsers(db *gorm.DB, offset, limit int) ([]models.Filters, int64, error)
+	RemoveFilter(db *gorm.DB, filterID string) error
+	GetFilterByID(db *gorm.DB, filterID string) (*models.Filters, error)
 }
 
 type filterRepository struct{}
@@ -57,4 +60,24 @@ func (r *filterRepository) GetFiltersForAllUsers(db *gorm.DB, offset, limit int)
 	}
 
 	return filters, totalRecords, nil
+}
+
+// RemoveFilter deletes a filter by ID
+func (r *filterRepository) RemoveFilter(db *gorm.DB, filterID string) error {
+	if err := db.Delete(&models.Filters{}, "id = ?", filterID).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetFilterByID retrieves a filter by its ID
+func (r *filterRepository) GetFilterByID(db *gorm.DB, filterID string) (*models.Filters, error) {
+	var filter models.Filters
+	if err := db.Where("id = ?", filterID).First(&filter).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &filter, nil
 }

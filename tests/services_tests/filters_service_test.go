@@ -371,3 +371,85 @@ func TestFilterService_GetAllFilters(t *testing.T) {
 		})
 	}
 }
+func TestFilterService_RemoveFilter(t *testing.T) {
+	// Setup the test database
+	db, err := setupTestDB()
+	if err != nil {
+		t.Fatalf("Failed to set up test database: %v", err)
+	}
+
+	// Seed users and filters
+	superAdmin := models.Users{ID: "super-admin-id", Role: "super-admin"}
+	admin := models.Users{ID: "admin-id", Role: "admin"}
+	user := models.Users{ID: "user-id", Role: "user"}
+
+	db.Save(&superAdmin)
+	db.Save(&admin)
+	db.Save(&user)
+
+	filtersData := []models.Filters{
+		{ID: "filter1", USER_ID: superAdmin.ID, City: "City1"},
+		{ID: "filter2", USER_ID: admin.ID, City: "City2"},
+		{ID: "filter3", USER_ID: user.ID, City: "City3"},
+	}
+
+	// Utility to reset test data
+	resetTestDB := func(db *gorm.DB, filters []models.Filters) error {
+		if err := db.Exec("DELETE FROM filters").Error; err != nil {
+			return err
+		}
+		for _, filter := range filters {
+			if err := db.Save(&filter).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	// Create a mock repository and service
+	mockRepo := repositories.NewFilterRepository()
+	s := filters.NewFilterService(mockRepo)
+
+	// Define test cases
+	tests := []struct {
+		name        string
+		userID      string
+		filterID    string
+		wantErr     bool
+		expectedErr string
+	}{
+		{"Super-admin deletes any filter", superAdmin.ID, "filter1", false, ""},
+		{"Admin deletes their own filter", admin.ID, "filter2", false, ""},
+		{"Admin tries to delete another user's filter", admin.ID, "filter3", true, "unauthorized to delete this filter"},
+		{"User deletes their own filter", user.ID, "filter3", false, ""},
+		{"User tries to delete another user's filter", user.ID, "filter1", true, "unauthorized to delete this filter"},
+		{"Super-admin tries to delete non-existent filter", superAdmin.ID, "non-existent-filter", true, "filter not found"},
+		{"Regular user tries to delete non-existent filter", user.ID, "non-existent-filter", true, "filter not found"},
+	}
+
+	// Run test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset database before each test
+			if err := resetTestDB(db, filtersData); err != nil {
+				t.Fatalf("Failed to reset test database: %v", err)
+			}
+
+			err := s.RemoveFilter(db, tt.userID, tt.filterID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FilterService.RemoveFilter() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err != nil && err.Error() != tt.expectedErr {
+				t.Errorf("FilterService.RemoveFilter() error = %v, expectedErr %v", err, tt.expectedErr)
+			}
+
+			// Verify the filter is deleted when no error is expected
+			if !tt.wantErr {
+				var filter models.Filters
+				if err := db.Where("id = ?", tt.filterID).First(&filter).Error; err == nil {
+					t.Errorf("FilterService.RemoveFilter() failed to delete filter: %v", tt.filterID)
+				}
+			}
+		})
+	}
+}

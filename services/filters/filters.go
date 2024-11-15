@@ -48,7 +48,6 @@ func (s *FilterService) GetFiltersByUserID(db *gorm.DB, userID string, pageIndex
 }
 
 // GetAllFilters retrieves filters based on the user's role
-// GetAllFilters retrieves filters based on the user's role
 func (s *FilterService) GetAllFilters(db *gorm.DB, userID string, pageIndex, pageSize int) (PaginatedFilters, error) {
 	// Validate page index
 	if pageIndex < 1 {
@@ -132,6 +131,41 @@ func (s *FilterService) CreateOrUpdateFilter(db *gorm.DB, filter models.Filters)
 	}
 
 	return true, nil
+}
+
+// RemoveFilter removes a filter based on the user's role and filter ownership
+func (s *FilterService) RemoveFilter(db *gorm.DB, userID, filterID string) error {
+	// Fetch the user to determine their role
+	user, err := repositories.GetUserByID(db, userID)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return errors.New("user not found")
+	}
+
+	// Fetch the filter to check ownership
+	filter, err := s.filterRepo.GetFilterByID(db, filterID)
+	if err != nil {
+		return err
+	}
+	if filter == nil {
+		return errors.New("filter not found")
+	}
+
+	// Role-based logic for deletion
+	if user.Role == "super-admin" {
+		// Super-admin can delete any filter
+		return s.filterRepo.RemoveFilter(db, filterID)
+	} else if user.Role == "admin" || user.Role == "user" {
+		// Admin or user can delete only their own filters
+		if filter.USER_ID != userID {
+			return errors.New("unauthorized to delete this filter")
+		}
+		return s.filterRepo.RemoveFilter(db, filterID)
+	}
+
+	return errors.New("role not authorized to delete filters")
 }
 
 // validateFilterFields validates all fields in the filter
