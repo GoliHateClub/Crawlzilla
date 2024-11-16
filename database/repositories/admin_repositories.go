@@ -47,3 +47,22 @@ func GetAdminByID(db *gorm.DB, telegramID int64) (*models.Users, error) {
 	}
 	return &user, nil
 }
+
+// RemoveAdminByTelegramID removes a user with the admin role by their Telegram ID.
+func RemoveAdminByTelegramID(db *gorm.DB, telegramID int64) error {
+	var user models.Users
+	if err := db.Where("telegram_id = ?", telegramID).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+	if user.Role != "admin" {
+		return errors.New("user is not an admin")
+	}
+	if err := db.Delete(&user).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
