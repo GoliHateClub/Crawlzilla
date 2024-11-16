@@ -17,8 +17,8 @@ const (
 // Users struct definition as before
 type Users struct {
 	ID          string `gorm:"type:uuid;primary_key;"`
-	Telegram_ID string `gorm:"type:varchar(10)"`
-	Role        Role   `gorm:"type:role_enum"`
+	Telegram_ID int64
+	Role        Role `gorm:"type:varchar(15)"`
 
 	Filers []Filters `gorm:"foreignKey:USER_ID"`
 }
