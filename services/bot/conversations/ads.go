@@ -1,14 +1,19 @@
 package conversations
 
 import (
+	"Crawlzilla/database"
 	"Crawlzilla/models"
 	"Crawlzilla/services/bot/constants"
 	"Crawlzilla/services/cache"
+	"Crawlzilla/services/super_admin"
+	"Crawlzilla/utils"
 	"context"
+	"fmt"
 	"go.uber.org/zap"
 	"log"
 	"regexp"
 	"strconv"
+	"strings"
 
 	cfg "Crawlzilla/logger"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -113,14 +118,8 @@ func AddAdConversation(ctx context.Context, state cache.UserState, update tgbota
 		})
 
 		if err != nil {
-			botLogger.Error(
-				"Error updating action state",
-				zap.Error(err),
-				zap.String("user_id", strconv.Itoa(int(state.UserId))),
-				zap.String("chat_id", strconv.Itoa(int(state.ChatId))),
-				zap.String("action", "add_add_st1"),
-			)
-			log.Printf("Error updating user state: %v", err)
+			cache.HandleActionStateError(botLogger, state, err)
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد!"))
 			return
 		}
 
@@ -129,18 +128,115 @@ func AddAdConversation(ctx context.Context, state cache.UserState, update tgbota
 		})
 
 		if err != nil {
-			botLogger.Error(
-				"Error updating user state",
-				zap.Error(err),
-				zap.String("user_id", strconv.Itoa(int(state.UserId))),
-				zap.String("chat_id", strconv.Itoa(int(state.ChatId))),
-			)
-			log.Printf("Error updating user state: %v", err)
+			cache.HandleUserStateError(botLogger, state, err)
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد!"))
+			return
 		}
 
 		msg := tgbotapi.NewMessage(state.ChatId, "حالا توضیحات آگهی خودت رو در قالب یک پیام بنویس و ارسال کن")
 		bot.Send(msg)
 	case "check_data_get_location":
+		description := strings.Trim(update.Message.Text, " ")
 
+		acData, err := actionStates.GetActionState(ctx, state.ChatId)
+		adMap, _ := acData.ActionData["new_ad"]
+		var ad models.Ads
+
+		err = utils.MapToStruct(adMap, &ad)
+
+		if err != nil {
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی هنگام پردازش داده رخ داد"))
+			botLogger.Error(
+				"Error while parsing ad data",
+				zap.String("user_id", strconv.FormatInt(state.UserId, 10)),
+				zap.Error(err),
+			)
+			return
+		}
+
+		fmt.Printf("%v\n", ad)
+
+		ad.Description = description
+
+		err = actionStates.UpdateActionCache(ctx, state.ChatId, map[string]interface{}{
+			"ActionData": map[string]interface{}{
+				"new_ad": ad,
+			},
+		})
+
+		if err != nil {
+			cache.HandleActionStateError(botLogger, state, err)
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد!"))
+			return
+		}
+
+		err = userStates.UpdateUserCache(ctx, state.ChatId, map[string]interface{}{
+			"Stage": "save",
+		})
+
+		if err != nil {
+			cache.HandleUserStateError(botLogger, state, err)
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد!"))
+			return
+		}
+
+		msg := tgbotapi.NewMessage(state.ChatId, "حالا با استفاده از لوکیشن تلگرام، لوکیشن مکان مورد نظر رو بفرست.")
+		bot.Send(msg)
+	case "save":
+		if update.Message.Location == nil {
+			msg := tgbotapi.NewMessage(state.ChatId, "آدرس ارسالی معتبر نبود! از امکان ارسال لوکیشن تلگرام استفاده کنید!")
+			bot.Send(msg)
+			return
+		}
+
+		acData, err := actionStates.GetActionState(ctx, state.ChatId)
+		adMap, _ := acData.ActionData["new_ad"]
+		var ad models.Ads
+
+		err = utils.MapToStruct(adMap, &ad)
+
+		if err != nil {
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی هنگام پردازش داده رخ داد"))
+			botLogger.Error(
+				"Error while parsing ad data",
+				zap.String("user_id", strconv.FormatInt(state.UserId, 10)),
+				zap.Error(err),
+			)
+			return
+		}
+
+		ad.Latitude = update.Message.Location.Latitude
+		ad.Longitude = update.Message.Location.Longitude
+
+		err = super_admin.CreateAd(&ad, database.DB)
+
+		if err != nil {
+			println(err)
+			msg := tgbotapi.NewMessage(state.ChatId, "خطایی هنگام ذخیره سازی اطلاعات رخ داد! لطفا دوباره تلاش کنید.")
+			bot.Send(msg)
+			msg = tgbotapi.NewMessage(state.ChatId, err.Error())
+			bot.Send(msg)
+		}
+
+		err = userStates.ClearUserCache(ctx, state.ChatId)
+
+		if err != nil {
+			cache.HandleUserStateError(botLogger, state, err)
+			msg := tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد")
+			bot.Send(msg)
+			return
+		}
+
+		err = actionStates.ClearActionState(ctx, state.ChatId)
+
+		if err != nil {
+			cache.HandleActionStateError(botLogger, state, err)
+			msg := tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد")
+			bot.Send(msg)
+			return
+		}
+
+		msg := tgbotapi.NewMessage(state.ChatId, "آگهی جدید با موفقیت ذخیره شد!")
+		bot.Send(msg)
 	}
 }
