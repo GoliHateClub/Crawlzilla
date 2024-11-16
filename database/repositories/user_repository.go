@@ -14,7 +14,7 @@ func CreateUser(db *gorm.DB, telegram_id string) (models.Users, error) {
 	if err := db.Where("telegram_id = ?", telegram_id).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// Create a new user if not found
-			user.Role = "user" // Set the default role
+			user.Role = models.RoleUser // Set the default role
 			user.Telegram_ID = telegram_id
 			if err := db.Create(&user).Error; err != nil { // Pass &user instead of user
 				return user, err

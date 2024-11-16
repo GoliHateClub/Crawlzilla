@@ -30,12 +30,6 @@ func ValidateAdData(result *models.Ads) error {
 	if err := validateTitle(result.Title); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
-	if err := validateLocationURL(result.LocationURL); err != nil {
-		validationErrors = append(validationErrors, err.Error())
-	}
-	if err := validateURL(result.URL); err != nil { // Use validateURL here
-		validationErrors = append(validationErrors, err.Error())
-	}
 	if err := validatePrice(result.Price); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
@@ -61,14 +55,6 @@ func validateTitle(title string) error {
 	return nil
 }
 
-// validateLocationURL checks if the location URL is valid
-func validateLocationURL(url string) error {
-	if len(url) > 255 {
-		return errors.New("location URL length exceeds 255 characters")
-	}
-	return nil
-}
-
 // validatePrice checks if the price is non-negative
 func validatePrice(price int) error {
 	if price < 0 {
@@ -84,17 +70,6 @@ func validateCoordinates(lat, long float64) error {
 	}
 	if long < -180 || long > 180 {
 		return fmt.Errorf("longitude %v is out of range (-180 to 180)", long)
-	}
-	return nil
-}
-
-// validateURL checks if the provided URL is a valid URL or not.
-func validateURL(url string) error {
-	if url == "" {
-		return errors.New("URL cannot be empty")
-	}
-	if len(url) > 255 {
-		return errors.New("URL length exceeds 255 characters")
 	}
 	return nil
 }
