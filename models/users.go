@@ -5,6 +5,15 @@ import (
 	"gorm.io/gorm"
 )
 
+type Role string
+
+// Constants for the roles
+const (
+	RoleUser       Role = "user"
+	RoleAdmin      Role = "admin"
+	RoleSuperAdmin Role = "super-admin"
+)
+
 // Users struct definition as before
 type Users struct {
 	ID          string `gorm:"type:uuid;primary_key;"`
