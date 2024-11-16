@@ -13,9 +13,9 @@ type PaginatedUsers struct {
 	Page  int            `json:"page"`
 }
 
-// GetAllUsersPaginatedService retrieves all users with pagination and structures the output
-func LoginUser(db *gorm.DB, telegram_id string) (string, error) {
-	return repositories.CreateUser(db, telegram_id)
+// LoginUser check if user exists or not. If not, create new user.
+func LoginUser(db *gorm.DB, telegramId string) (string, error) {
+	return repositories.CreateUser(db, telegramId)
 }
 
 // GetAllUsersPaginatedService retrieves all users with pagination and structures the output

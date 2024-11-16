@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"Crawlzilla/models"
-
 	"gorm.io/gorm"
 )
 
