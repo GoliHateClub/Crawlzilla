@@ -113,7 +113,7 @@ func validatePhoneNumber(phoneNumber string) error {
 	re := regexp.MustCompile(pattern)
 
 	// Validate the phone number
-	if phoneNumber != "0" || !re.MatchString(phoneNumber) {
+	if !re.MatchString(phoneNumber) {
 		return errors.New("phone number is invalid")
 	}
 	return nil
