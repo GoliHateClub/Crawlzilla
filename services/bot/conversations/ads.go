@@ -214,6 +214,7 @@ func AddAdConversation(ctx context.Context, state cache.UserState, update tgbota
 			bot.Send(msg)
 			msg = tgbotapi.NewMessage(state.ChatId, err.Error())
 			bot.Send(msg)
+			return
 		}
 
 		err = userStates.ClearUserCache(ctx, state.ChatId)
