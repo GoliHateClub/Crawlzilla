@@ -4,7 +4,7 @@ import (
 	"Crawlzilla/database/repositories"
 	"Crawlzilla/models"
 	"Crawlzilla/services/users"
-	"strconv"
+	"log"
 	"testing"
 
 	"github.com/glebarez/sqlite"
@@ -24,7 +24,7 @@ func TestGetAllUsersPaginatedService(t *testing.T) {
 
 	// Insert test users
 	for i := 0; i < 25; i++ {
-		user := models.Users{Telegram_ID: "user_" + strconv.Itoa(i)}
+		user := models.Users{Telegram_ID: int64(i)}
 		repositories.CreateUser(db, user.Telegram_ID)
 	}
 
@@ -41,4 +41,32 @@ func TestGetAllUsersPaginatedService(t *testing.T) {
 	assert.Equal(t, 10, len(result.Data), "Page size should be 10")
 	assert.Equal(t, 3, result.Pages, "Total pages should be 3")
 	assert.Equal(t, 2, result.Page, "Current page should be 2")
+}
+
+func TestGetUserByIDService(t *testing.T) {
+	db := setupServiceTestDB()
+	defer db.Exec("DROP TABLE users")
+
+	// Insert a test user
+	user := models.Users{
+		Telegram_ID: int64(12345),
+		Role:        "super-admin",
+	}
+	user, err := repositories.CreateUser(db, user.Telegram_ID)
+	if err != nil {
+		log.Println("ERROR ", err)
+	}
+
+	// Test retrieving the user by ID
+	retrievedUser, err := users.GetUserByIDService(db, user.ID)
+	assert.NoError(t, err, "Retrieving a valid user should not return an error")
+	assert.NotNil(t, retrievedUser, "Retrieved user should not be nil")
+	assert.Equal(t, user.ID, retrievedUser.ID, "The retrieved user ID should match the created user ID")
+	assert.Equal(t, user.Role, retrievedUser.Role, "The retrieved user role should match the created user role")
+
+	// Test retrieving a user with a non-existent ID
+	nonExistentID := "non-existent-id"
+	retrievedUser, err = users.GetUserByIDService(db, nonExistentID)
+	assert.Error(t, err, "Retrieving a user with a non-existent ID should return an error")
+	assert.Equal(t, "user not found", err.Error())
 }

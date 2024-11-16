@@ -59,44 +59,71 @@ func TestValidateAdData(t *testing.T) {
 		expectErr bool
 	}{
 		{
-			name: "Valid Crawl Result",
+			name: "Valid Ad Data",
 			result: &models.Ads{
-				Title:       "Valid Title",
-				LocationURL: "https://valid.url",
-				Price:       100,
-				Latitude:    45.0,
-				Longitude:   90.0,
+				Title:        "Valid Title",
+				LocationURL:  "https://valid.url",
+				Price:        100,
+				Latitude:     45.0,
+				Longitude:    90.0,
+				CategoryType: "فروش",
+				PropertyType: "مسکونی",
 			},
 			expectErr: false,
 		},
 		{
 			name: "Empty Title",
 			result: &models.Ads{
-				Title:       "",
-				LocationURL: "https://valid.url",
-				Price:       100,
-				Latitude:    45.0,
-				Longitude:   90.0,
+				Title:        "",
+				LocationURL:  "https://valid.url",
+				Price:        100,
+				Latitude:     45.0,
+				Longitude:    90.0,
+				CategoryType: "فروش",
+				PropertyType: "مسکونی",
 			},
 			expectErr: true,
 		},
-		// Additional tests here...
+		{
+			name: "Invalid Category Type",
+			result: &models.Ads{
+				Title:        "Valid Title",
+				LocationURL:  "https://valid.url",
+				Price:        100,
+				Latitude:     45.0,
+				Longitude:    90.0,
+				CategoryType: "invalid",
+				PropertyType: "مسکونی",
+			},
+			expectErr: true,
+		},
+		{
+			name: "Invalid Latitude",
+			result: &models.Ads{
+				Title:        "Valid Title",
+				LocationURL:  "https://valid.url",
+				Price:        100,
+				Latitude:     100.0, // Invalid latitude
+				Longitude:    90.0,
+				CategoryType: "فروش",
+				PropertyType: "مسکونی",
+			},
+			expectErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := super_admin.ValidateAdData(tt.result)
 			if (err != nil) != tt.expectErr {
-				t.Errorf("ValidateAdData() error = %v, wantErr %v", err, tt.expectErr)
-			}
-			if err != nil && !tt.expectErr {
-				t.Errorf("unexpected error: %v", err)
+				t.Errorf("ValidateAdData() error = %v, expectErr %v", err, tt.expectErr)
 			}
 		})
 	}
 }
 
 func TestAddAdForSuperAdmin(t *testing.T) {
+	// Setup test database
 	db := SetupTestDB()
 
 	tests := []struct {
@@ -105,45 +132,69 @@ func TestAddAdForSuperAdmin(t *testing.T) {
 		expectErr bool
 	}{
 		{
-			name: "Valid Crawl Result",
+			name: "Valid Ad Data",
 			result: &models.Ads{
-				Title:       "Valid Title",
-				LocationURL: "https://valid.url",
-				Price:       100,
-				Latitude:    45.0,
-				Longitude:   90.0,
+				Title:        "Valid Title",
+				Price:        100,
+				Latitude:     45.0,
+				Longitude:    90.0,
+				CategoryType: "فروش",      // Persian word for "sell"
+				PropertyType: "آپارتمانی", // Persian word for "house"
 			},
 			expectErr: false,
 		},
 		{
-			name: "Invalid Crawl Result - Empty Title",
+			name: "Invalid Ad Data - Empty Title",
 			result: &models.Ads{
-				Title:       "",
-				LocationURL: "https://valid.url",
-				Price:       100,
-				Latitude:    45.0,
-				Longitude:   90.0,
+				Title:        "",
+				Price:        100,
+				Latitude:     45.0,
+				Longitude:    90.0,
+				CategoryType: "فروش",
+				PropertyType: "آپارتمانی",
+			},
+			expectErr: true,
+		},
+		{
+			name: "Invalid Ad Data - Invalid Category Type",
+			result: &models.Ads{
+				Title:        "Valid Title",
+				Price:        100,
+				Latitude:     45.0,
+				Longitude:    90.0,
+				CategoryType: "invalid", // Invalid category type
+				PropertyType: "آپارتمانی",
 			},
 			expectErr: true,
 		},
 	}
 
-	// Loop over the test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Call the function with the mock database
-			err := super_admin.CreateAd(tt.result, db)
+			// Clean up database before each test
+			db.Exec("DELETE FROM ads")
+
+			err := super_admin.CreateAd(db, tt.result)
+
+			// Validate error presence
 			if (err != nil) != tt.expectErr {
-				t.Errorf("AddAdForSuperAdmin() error = %v, wantErr %v", err, tt.expectErr)
+				t.Errorf("CreateAd() error = %v, expectErr %v", err, tt.expectErr)
 			}
 
-			// If no error is expected, check the data was actually inserted
+			// If no error is expected, validate data was saved correctly
 			if !tt.expectErr {
 				var ad models.Ads
-				db.First(&ad, "title = ?", tt.result.Title)
-				assert.Equal(t, tt.result.Title, ad.Title)
-				assert.Equal(t, tt.result.Price, ad.Price)
-				assert.Equal(t, tt.result.LocationURL, ad.LocationURL)
+				if err := db.First(&ad, "title = ?", tt.result.Title).Error; err != nil {
+					t.Errorf("Ad was not inserted: %v", err)
+					return
+				}
+
+				// Validate transformations
+				assert.Equal(t, "sell", ad.CategoryType, "Expected transformed CategoryType to be 'sell'")
+				assert.Equal(t, "house", ad.PropertyType, "Expected transformed PropertyType to be 'house'")
+				assert.Equal(t, tt.result.Title, ad.Title, "Title mismatch")
+				assert.Equal(t, tt.result.Price, ad.Price, "Price mismatch")
+				assert.Contains(t, ad.URL, "super-admin-", "Expected URL to start with 'super-admin-'")
 			}
 		})
 	}

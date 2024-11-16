@@ -27,6 +27,7 @@ type Ads struct {
 	URL           string  `gorm:"type:varchar(255)"`
 	City          string  `gorm:"type:varchar(32)"`
 	Neighborhood  string  `gorm:"type:varchar(32)"`
+	ContactNumber string  `gorm:"type:varchar(32)"`
 	Reference     string  `gorm:"type:varchar(10)"`
 	CategoryType  string  `gorm:"type:varchar(10)"`
 	PropertyType  string  `gorm:"type:varchar(10)"`
@@ -38,7 +39,6 @@ type Ads struct {
 	Room          int     `gorm:"type:int"`
 	FloorNumber   int     `gorm:"type:int"`
 	TotalFloors   int     `gorm:"type:int"`
-	ContactNumber int     `gorm:"type:int"`
 	VisitCount    int     `gorm:"type:int"`
 	HasElevator   bool    `gorm:"type:boolean"`
 	HasStorage    bool    `gorm:"type:boolean"`
