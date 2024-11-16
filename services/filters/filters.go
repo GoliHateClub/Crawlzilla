@@ -6,7 +6,6 @@ import (
 	"errors"
 	"math"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -17,23 +16,15 @@ type PaginatedFilters struct {
 	PageIndex  int              `json:"page_index"`
 }
 
-type FilterService struct {
-	filterRepo repositories.FilterRepository
-}
-
-func NewFilterService(repo repositories.FilterRepository) *FilterService {
-	return &FilterService{filterRepo: repo}
-}
-
 // GetFiltersByUserID retrieves filters for a user with pagination
-func (s *FilterService) GetFiltersByUserID(db *gorm.DB, userID string, pageIndex, pageSize int) (PaginatedFilters, error) {
+func GetFiltersByUserID(db *gorm.DB, userID string, pageIndex, pageSize int) (PaginatedFilters, error) {
 	// Validate page index
 	if pageIndex < 1 {
 		return PaginatedFilters{}, errors.New("pageIndex must be greater than 0")
 	}
 
 	// Fetch filters and total records from the repository
-	filters, totalRecords, err := s.filterRepo.GetFiltersByUserID(db, userID, pageIndex, pageSize)
+	filters, totalRecords, err := repositories.GetFiltersByUserID(db, userID, pageIndex, pageSize)
 	if err != nil {
 		return PaginatedFilters{}, err
 	}
@@ -48,8 +39,8 @@ func (s *FilterService) GetFiltersByUserID(db *gorm.DB, userID string, pageIndex
 	}, nil
 }
 
-// GetAllFilters retrieves filters based on the user's role
-func (s *FilterService) GetAllFilters(db *gorm.DB, userID string, pageIndex, pageSize int) (PaginatedFilters, error) {
+// GetAllFilters retrieves filters based on the user's role (SUPER ADMIN - ADMIN)
+func GetAllFilters(db *gorm.DB, userID string, pageIndex, pageSize int) (PaginatedFilters, error) {
 	// Validate page index
 	if pageIndex < 1 {
 		return PaginatedFilters{}, errors.New("pageIndex must be greater than 0")
@@ -60,9 +51,6 @@ func (s *FilterService) GetAllFilters(db *gorm.DB, userID string, pageIndex, pag
 	if err != nil {
 		return PaginatedFilters{}, err
 	}
-	if user == nil {
-		return PaginatedFilters{}, errors.New("user not found")
-	}
 
 	// Role-based logic
 	var filters []models.Filters
@@ -71,14 +59,14 @@ func (s *FilterService) GetAllFilters(db *gorm.DB, userID string, pageIndex, pag
 
 	if user.Role == "super-admin" {
 		// Fetch all filters for all users
-		filters, totalRecords, err = s.filterRepo.GetFiltersForAllUsers(db, offset, pageSize)
+		filters, totalRecords, err = repositories.GetFiltersForAllUsers(db, offset, pageSize)
 		if err != nil {
 			return PaginatedFilters{}, err
 		}
 
 	} else if user.Role == "admin" {
 		// Fetch all filters but hide the USER_ID field
-		filters, totalRecords, err = s.filterRepo.GetFiltersForAllUsers(db, offset, pageSize)
+		filters, totalRecords, err = repositories.GetFiltersForAllUsers(db, offset, pageSize)
 		if err != nil {
 			return PaginatedFilters{}, err
 		}
@@ -102,74 +90,15 @@ func (s *FilterService) GetAllFilters(db *gorm.DB, userID string, pageIndex, pag
 		PageIndex:  pageIndex,
 	}, nil
 }
-func (s *FilterService) CreateOrUpdateFilter(db *gorm.DB, filter models.Filters) (string, error) {
+
+func CreateOrUpdateFilter(db *gorm.DB, filter models.Filters) (string, error) {
 	// Step 1: Validate all fields
-	if err := s.validateFilterFields(filter); err != nil {
+	if err := validateFilterFields(filter); err != nil {
 		return "", err
 	}
 
-	// Step 2: Check if the user exists
-	user, err := repositories.GetUserByID(db, filter.USER_ID)
+	err := repositories.CreateOrUpdateFilter(db, &filter)
 	if err != nil {
-		return "", err
-	}
-
-	// Step 3: If the user does not exist, create a new user with "user" role
-	if user == nil {
-		newUser := &models.Users{
-			ID:          filter.USER_ID,
-			Telegram_ID: "", // Set Telegram_ID as needed
-			Role:        "user",
-		}
-		if _, err := repositories.CreateUser(db, newUser.Telegram_ID); err != nil {
-			return "", err
-		}
-	}
-
-	// Step 4: Check if the filter already exists only if filter.ID is not empty
-	if filter.ID != "" {
-		var existingFilter models.Filters
-		if err := db.Where("id = ?", filter.ID).First(&existingFilter).Error; err == nil {
-			// If the filter exists, update its fields
-			existingFilter.City = filter.City
-			existingFilter.Neighborhood = filter.Neighborhood
-			existingFilter.Reference = filter.Reference
-			existingFilter.CategoryType = filter.CategoryType
-			existingFilter.PropertyType = filter.PropertyType
-			existingFilter.Sort = filter.Sort
-			existingFilter.Order = filter.Order
-			existingFilter.MinArea = filter.MinArea
-			existingFilter.MaxArea = filter.MaxArea
-			existingFilter.MinPrice = filter.MinPrice
-			existingFilter.MaxPrice = filter.MaxPrice
-			existingFilter.MinRent = filter.MinRent
-			existingFilter.MaxRent = filter.MaxRent
-			existingFilter.MinRoom = filter.MinRoom
-			existingFilter.MaxRoom = filter.MaxRoom
-			existingFilter.MinFloorNumber = filter.MinFloorNumber
-			existingFilter.MaxFloorNumber = filter.MaxFloorNumber
-			existingFilter.HasElevator = filter.HasElevator
-			existingFilter.HasStorage = filter.HasStorage
-			existingFilter.HasParking = filter.HasParking
-			existingFilter.HasBalcony = filter.HasBalcony
-
-			// Save the updated filter
-			if err := s.filterRepo.CreateOrUpdateFilter(db, &existingFilter); err != nil {
-				return "", err
-			}
-
-			return existingFilter.ID, nil // Return the updated filter ID
-		} else if err != gorm.ErrRecordNotFound {
-			// If there's another error (not ErrRecordNotFound), return it
-			return "", err
-		}
-	}
-
-	// Step 5: If filter.ID is empty or the filter does not exist, assign a new ID and create the filter
-	if filter.ID == "" {
-		filter.ID = uuid.NewString()
-	}
-	if err := s.filterRepo.CreateOrUpdateFilter(db, &filter); err != nil {
 		return "", err
 	}
 
@@ -177,18 +106,15 @@ func (s *FilterService) CreateOrUpdateFilter(db *gorm.DB, filter models.Filters)
 }
 
 // RemoveFilter removes a filter based on the user's role and filter ownership
-func (s *FilterService) RemoveFilter(db *gorm.DB, userID, filterID string) error {
+func RemoveFilter(db *gorm.DB, userID, filterID string) error {
 	// Fetch the user to determine their role
 	user, err := repositories.GetUserByID(db, userID)
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		return errors.New("user not found")
-	}
 
 	// Fetch the filter to check ownership
-	filter, err := s.filterRepo.GetFilterByID(db, filterID)
+	filter, err := repositories.GetFilterByID(db, filterID)
 	if err != nil {
 		return err
 	}
@@ -199,63 +125,63 @@ func (s *FilterService) RemoveFilter(db *gorm.DB, userID, filterID string) error
 	// Role-based logic for deletion
 	if user.Role == "super-admin" {
 		// Super-admin can delete any filter
-		return s.filterRepo.RemoveFilter(db, filterID)
+		return repositories.RemoveFilter(db, filterID)
 	} else if user.Role == "admin" || user.Role == "user" {
 		// Admin or user can delete only their own filters
 		if filter.USER_ID != userID {
 			return errors.New("unauthorized to delete this filter")
 		}
-		return s.filterRepo.RemoveFilter(db, filterID)
+		return repositories.RemoveFilter(db, filterID)
 	}
 
 	return errors.New("role not authorized to delete filters")
 }
 
 // validateFilterFields validates all fields in the filter
-func (s *FilterService) validateFilterFields(filter models.Filters) error {
-	if err := s.validateArea(filter.MinArea, filter.MaxArea); err != nil {
+func validateFilterFields(filter models.Filters) error {
+	if err := validateArea(filter.MinArea, filter.MaxArea); err != nil {
 		return err
 	}
-	if err := s.validatePrice(filter.MinPrice, filter.MaxPrice); err != nil {
+	if err := validatePrice(filter.MinPrice, filter.MaxPrice); err != nil {
 		return err
 	}
-	if err := s.validateRent(filter.MinRent, filter.MaxRent); err != nil {
+	if err := validateRent(filter.MinRent, filter.MaxRent); err != nil {
 		return err
 	}
-	if err := s.validateRoom(filter.MinRoom, filter.MaxRoom); err != nil {
+	if err := validateRoom(filter.MinRoom, filter.MaxRoom); err != nil {
 		return err
 	}
-	if err := s.validateFloorNumber(filter.MinFloorNumber, filter.MaxFloorNumber); err != nil {
+	if err := validateFloorNumber(filter.MinFloorNumber, filter.MaxFloorNumber); err != nil {
 		return err
 	}
 	// Validate optional string fields only if they are provided
 	if filter.City != "" {
-		if err := s.validateCity(filter.City); err != nil {
+		if err := validateCity(filter.City); err != nil {
 			return err
 		}
 	}
 	if filter.Neighborhood != "" {
-		if err := s.validateNeighborhood(filter.Neighborhood); err != nil {
+		if err := validateNeighborhood(filter.Neighborhood); err != nil {
 			return err
 		}
 	}
 	if filter.Reference != "" {
-		if err := s.validateReference(filter.Reference); err != nil {
+		if err := validateReference(filter.Reference); err != nil {
 			return err
 		}
 	}
 	if filter.CategoryType != "" {
-		if err := s.validateCategoryType(filter.CategoryType); err != nil {
+		if err := validateCategoryType(filter.CategoryType); err != nil {
 			return err
 		}
 	}
 	if filter.PropertyType != "" {
-		if err := s.validatePropertyType(filter.PropertyType); err != nil {
+		if err := validatePropertyType(filter.PropertyType); err != nil {
 			return err
 		}
 	}
 	if filter.Sort != "" || filter.Order != "" {
-		if err := s.validateSortOrder(filter.Sort, filter.Order); err != nil {
+		if err := validateSortOrder(filter.Sort, filter.Order); err != nil {
 			return err
 		}
 	}
@@ -266,49 +192,49 @@ func (s *FilterService) validateFilterFields(filter models.Filters) error {
 }
 
 // Individual validation functions
-func (s *FilterService) validateCity(city string) error {
+func validateCity(city string) error {
 	if city == "" {
 		return errors.New("city cannot be empty")
 	}
 	return nil
 }
 
-func (s *FilterService) validateNeighborhood(neighborhood string) error {
+func validateNeighborhood(neighborhood string) error {
 	if neighborhood == "" {
 		return errors.New("neighborhood cannot be empty")
 	}
 	return nil
 }
 
-func (s *FilterService) validateReference(reference string) error {
+func validateReference(reference string) error {
 	if reference == "" {
 		return errors.New("reference cannot be empty")
 	}
 	return nil
 }
 
-func (s *FilterService) validateCategoryType(categoryType string) error {
+func validateCategoryType(categoryType string) error {
 	if categoryType == "" {
 		return errors.New("category type cannot be empty")
 	}
 	return nil
 }
 
-func (s *FilterService) validatePropertyType(propertyType string) error {
+func validatePropertyType(propertyType string) error {
 	if propertyType == "" {
 		return errors.New("property type cannot be empty")
 	}
 	return nil
 }
 
-func (s *FilterService) validateSortOrder(sort, order string) error {
+func validateSortOrder(sort, order string) error {
 	if sort == "" || order == "" {
 		return errors.New("both sort and order must be provided if one is specified")
 	}
 	return nil
 }
 
-func (s *FilterService) validateArea(minArea, maxArea int) error {
+func validateArea(minArea, maxArea int) error {
 	if minArea != 0 && maxArea != 0 {
 		if minArea < 0 || maxArea < 0 {
 			return errors.New("area values cannot be negative")
@@ -320,7 +246,7 @@ func (s *FilterService) validateArea(minArea, maxArea int) error {
 	return nil
 }
 
-func (s *FilterService) validatePrice(minPrice, maxPrice int) error {
+func validatePrice(minPrice, maxPrice int) error {
 	if minPrice != 0 && maxPrice != 0 {
 		if minPrice < 0 || maxPrice < 0 {
 			return errors.New("price values cannot be negative")
@@ -332,7 +258,7 @@ func (s *FilterService) validatePrice(minPrice, maxPrice int) error {
 	return nil
 }
 
-func (s *FilterService) validateRent(minRent, maxRent int) error {
+func validateRent(minRent, maxRent int) error {
 	if minRent != 0 && maxRent != 0 {
 		if minRent < 0 || maxRent < 0 {
 			return errors.New("rent values cannot be negative")
@@ -344,7 +270,7 @@ func (s *FilterService) validateRent(minRent, maxRent int) error {
 	return nil
 }
 
-func (s *FilterService) validateRoom(minRoom, maxRoom int) error {
+func validateRoom(minRoom, maxRoom int) error {
 	if minRoom != 0 && maxRoom != 0 {
 		if minRoom < 0 || maxRoom < 0 {
 			return errors.New("room values cannot be negative")
@@ -356,7 +282,7 @@ func (s *FilterService) validateRoom(minRoom, maxRoom int) error {
 	return nil
 }
 
-func (s *FilterService) validateFloorNumber(minFloor, maxFloor int) error {
+func validateFloorNumber(minFloor, maxFloor int) error {
 	if minFloor != 0 && maxFloor != 0 {
 		if minFloor < 0 || maxFloor < 0 {
 			return errors.New("floor number values cannot be negative")
