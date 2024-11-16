@@ -74,6 +74,16 @@ func (s *ActionCache) ClearActionState(ctx context.Context, chatID int64) error 
 	return s.redis.Del(ctx, key).Err()
 }
 
+func HandleActionStateError(logger *zap.Logger, state UserState, err error) {
+	logger.Error(
+		"Error updating user state",
+		zap.Error(err),
+		zap.String("user_id", strconv.Itoa(int(state.UserId))),
+		zap.String("chat_id", strconv.Itoa(int(state.ChatId))),
+	)
+	log.Printf("Error updating user state: %v", err)
+}
+
 func getActionStateKey(chatID int64) string {
 	return "action_state:" + strconv.FormatInt(chatID, 10)
 }
