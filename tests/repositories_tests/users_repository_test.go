@@ -25,9 +25,9 @@ func TestCreateUser(t *testing.T) {
 		Telegram_ID: "test_telegram_id",
 	}
 
-	role, err := repositories.CreateUser(db, user.Telegram_ID)
+	user, err := repositories.CreateUser(db, user.Telegram_ID)
 	assert.NoError(t, err, "Creating user should not return an error")
-	assert.Equal(t, role, "user", "Role should match")
+	assert.Equal(t, user.Role, "user", "Role should match")
 }
 
 func TestGetUserByID(t *testing.T) {
