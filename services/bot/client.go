@@ -2,7 +2,7 @@ package bot
 
 import (
 	"context"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"golang.org/x/net/proxy"
 	"log"
 	"net"
@@ -33,7 +33,7 @@ func Init() *tgbotapi.BotAPI {
 
 		// Create HTTP client with the proxy
 		client := &http.Client{Transport: transport}
-		bot, err := tgbotapi.NewBotAPIWithClient(os.Getenv("TELEGRAM_BOT"), client)
+		bot, err := tgbotapi.NewBotAPIWithClient(os.Getenv("TELEGRAM_BOT"), tgbotapi.APIEndpoint, client)
 
 		if err != nil {
 			log.Panic(err)

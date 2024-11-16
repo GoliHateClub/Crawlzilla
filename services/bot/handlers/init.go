@@ -5,7 +5,7 @@ import (
 	"context"
 	"log"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type ConfigurationType struct {
@@ -25,17 +25,15 @@ func Init(ctx context.Context) {
 		return
 	}
 
-	state := cache.CreateUserStateCache(ctx)
-	ctx = context.WithValue(ctx, "state", state)
+	userState := cache.CreateUserCache(ctx)
+	actionState := cache.CreateActionCache(ctx)
+	ctx = context.WithValue(ctx, "user_state", userState)
+	ctx = context.WithValue(ctx, "action_state", actionState)
 
 	u := tgbotapi.NewUpdate(Configuration.NewUpdateOffset)
 	u.Timeout = Configuration.Timeout
 
-	updates, err := bot.GetUpdatesChan(u)
-	if err != nil {
-		log.Printf("Error retrieving updates: %v", err)
-		return
-	}
+	updates := bot.GetUpdatesChan(u)
 
 	go func() {
 		for {
@@ -46,7 +44,6 @@ func Init(ctx context.Context) {
 			case update, ok := <-updates:
 				if !ok {
 					log.Println("Updates channel closed.")
-					return
 				}
 
 				if update.Message != nil && update.Message.IsCommand() {
@@ -54,7 +51,7 @@ func Init(ctx context.Context) {
 				}
 
 				// Handle messages in conversation
-				if update.Message != nil {
+				if update.Message != nil && !update.Message.IsCommand() {
 					HandleConversation(ctx, update)
 				}
 

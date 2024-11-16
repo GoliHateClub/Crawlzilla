@@ -8,9 +8,10 @@ import (
 	"Crawlzilla/services/cache"
 	"Crawlzilla/services/super_admin"
 	"context"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"go.uber.org/zap"
 	"strconv"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func HandleConversation(ctx context.Context, update tgbotapi.Update) {
@@ -18,22 +19,22 @@ func HandleConversation(ctx context.Context, update tgbotapi.Update) {
 	configLogger := ctx.Value("configLogger").(cfg.ConfigLoggerType)
 	botLogger, _ := configLogger("bot")
 
-	state := ctx.Value("state").(*cache.UserState)
+	state := ctx.Value("user_state").(*cache.UserCache)
 
-	userState, err := state.GetUserState(ctx, update.Message.Chat.ID)
+	userState, err := state.GetUserCache(ctx, update.Message.Chat.ID)
 
 	if err != nil {
 		botLogger.Error(
 			"Error while reading user state from store",
 			zap.Error(err),
-			zap.String("user_id", strconv.Itoa(update.Message.From.ID)),
+			zap.String("user_id", strconv.Itoa(int(update.Message.From.ID))),
 			zap.String("user_name", update.Message.From.UserName),
 		)
 	}
 
-	if userState == (cache.State{}) {
+	if userState == (cache.UserState{}) {
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "متوجه منظورت نشدم!. از منو زیر استفاده کن.")
-		isAdmin := super_admin.IsSuperAdmin(int64(update.Message.From.ID))
+		isAdmin := super_admin.IsSuperAdmin(update.Message.From.ID)
 		msg.ReplyMarkup = keyboards.InlineKeyboard(menus.MainMenu, isAdmin)
 		bot.Send(msg)
 		return

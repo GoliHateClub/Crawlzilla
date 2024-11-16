@@ -33,7 +33,7 @@ func ValidateAdData(result *models.Ads) error {
 	if err := validateLocationURL(result.LocationURL); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
-	if err := validateURL(result.LocationURL); err != nil { // Use validateURL here
+	if err := validateURL(result.URL); err != nil { // Use validateURL here
 		validationErrors = append(validationErrors, err.Error())
 	}
 	if err := validatePrice(result.Price); err != nil {

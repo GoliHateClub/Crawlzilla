@@ -4,7 +4,7 @@ import (
 	"Crawlzilla/services/bot/conversations"
 	"Crawlzilla/services/cache"
 	"context"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
@@ -18,7 +18,7 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 	case "/remove_admin":
 		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
 	case "/add_ad":
-		conversations.AddAdConversation(ctx, cache.CreateNewState("add_ad", update.CallbackQuery), update)
+		conversations.AddAdConversation(ctx, cache.CreateNewUserState("add_ad", update.CallbackQuery), update)
 	case "/remove_ad":
 		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
 	case "/update_ad":
@@ -29,5 +29,5 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 	}
 
 	// Acknowledge the callback to prevent the loading indicator
-	bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, "Action received"))
+	bot.Send(tgbotapi.NewCallback(update.CallbackQuery.ID, "Action received"))
 }
