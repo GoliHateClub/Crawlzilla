@@ -7,26 +7,49 @@ import (
 	"gorm.io/gorm"
 )
 
-type FilterRepository interface {
-	CreateOrUpdateFilter(db *gorm.DB, filter *models.Filters) error
-	GetFiltersByUserID(db *gorm.DB, userID string, pageIndex, pageSize int) ([]models.Filters, int64, error)
-	GetFiltersForAllUsers(db *gorm.DB, offset, limit int) ([]models.Filters, int64, error)
-	RemoveFilter(db *gorm.DB, filterID string) error
-	GetFilterByID(db *gorm.DB, filterID string) (*models.Filters, error)
-}
+func CreateOrUpdateFilter(db *gorm.DB, filter *models.Filters) error {
 
-type filterRepository struct{}
+	// Step 2: Check if the filter already exists only if filter.ID is not empty
+	if filter.ID != "" {
+		var existingFilter models.Filters
+		if err := db.Where("id = ?", filter.ID).First(&existingFilter).Error; err == nil {
+			// If the filter exists, update its fields
+			existingFilter.City = filter.City
+			existingFilter.Neighborhood = filter.Neighborhood
+			existingFilter.Reference = filter.Reference
+			existingFilter.CategoryType = filter.CategoryType
+			existingFilter.PropertyType = filter.PropertyType
+			existingFilter.Sort = filter.Sort
+			existingFilter.Order = filter.Order
+			existingFilter.MinArea = filter.MinArea
+			existingFilter.MaxArea = filter.MaxArea
+			existingFilter.MinPrice = filter.MinPrice
+			existingFilter.MaxPrice = filter.MaxPrice
+			existingFilter.MinRent = filter.MinRent
+			existingFilter.MaxRent = filter.MaxRent
+			existingFilter.MinRoom = filter.MinRoom
+			existingFilter.MaxRoom = filter.MaxRoom
+			existingFilter.MinFloorNumber = filter.MinFloorNumber
+			existingFilter.MaxFloorNumber = filter.MaxFloorNumber
+			existingFilter.HasElevator = filter.HasElevator
+			existingFilter.HasStorage = filter.HasStorage
+			existingFilter.HasParking = filter.HasParking
+			existingFilter.HasBalcony = filter.HasBalcony
 
-func NewFilterRepository() FilterRepository {
-	return &filterRepository{}
-}
+			// Save the updated filter
+			if err := db.Save(&existingFilter).Error; err != nil {
+				return err
+			}
+			return err
+		}
 
-func (r *filterRepository) CreateOrUpdateFilter(db *gorm.DB, filter *models.Filters) error {
-	return db.Save(filter).Error
+	}
+
+	return db.Create(&filter).Error
 }
 
 // GetFiltersByUserID fetches filters for a user with pagination
-func (r *filterRepository) GetFiltersByUserID(db *gorm.DB, userID string, pageIndex, pageSize int) ([]models.Filters, int64, error) {
+func GetFiltersByUserID(db *gorm.DB, userID string, pageIndex, pageSize int) ([]models.Filters, int64, error) {
 	var filters []models.Filters
 	var totalRecords int64
 
@@ -45,7 +68,7 @@ func (r *filterRepository) GetFiltersByUserID(db *gorm.DB, userID string, pageIn
 }
 
 // GetFiltersForAllUsers fetches filters for all users with pagination
-func (r *filterRepository) GetFiltersForAllUsers(db *gorm.DB, offset, limit int) ([]models.Filters, int64, error) {
+func GetFiltersForAllUsers(db *gorm.DB, offset, limit int) ([]models.Filters, int64, error) {
 	var filters []models.Filters
 	var totalRecords int64
 
@@ -63,7 +86,7 @@ func (r *filterRepository) GetFiltersForAllUsers(db *gorm.DB, offset, limit int)
 }
 
 // RemoveFilter deletes a filter by ID
-func (r *filterRepository) RemoveFilter(db *gorm.DB, filterID string) error {
+func RemoveFilter(db *gorm.DB, filterID string) error {
 	if err := db.Delete(&models.Filters{}, "id = ?", filterID).Error; err != nil {
 		return err
 	}
@@ -71,7 +94,7 @@ func (r *filterRepository) RemoveFilter(db *gorm.DB, filterID string) error {
 }
 
 // GetFilterByID retrieves a filter by its ID
-func (r *filterRepository) GetFilterByID(db *gorm.DB, filterID string) (*models.Filters, error) {
+func GetFilterByID(db *gorm.DB, filterID string) (*models.Filters, error) {
 	var filter models.Filters
 	if err := db.Where("id = ?", filterID).First(&filter).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

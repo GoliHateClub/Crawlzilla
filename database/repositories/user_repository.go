@@ -2,41 +2,65 @@ package repositories
 
 import (
 	"Crawlzilla/models"
-	"errors"
 
 	"gorm.io/gorm"
 )
 
 // CreateUser creates a new user
-func CreateUser(db *gorm.DB, telegramId string) (string, error) {
+func CreateUser(db *gorm.DB, telegramId int64) (models.Users, error) {
 	var user models.Users
 
 	// Check if the user already exists
 	if err := db.Where("telegram_id = ?", telegramId).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// Create a new user if not found
-			user.Role = "user" // Set the default role
+			user.Role = models.RoleUser // Set the default role
 			user.Telegram_ID = telegramId
+
 			if err := db.Create(&user).Error; err != nil { // Pass &user instead of user
-				return "", err
+				return user, err
 			}
-			return user.Role, nil
+			return user, nil
 		}
-		return "", err // Handle unexpected errors
+		return user, err // Handle unexpected errors
 	}
-	return user.Role, nil // Return the existing user's role
+	return user, nil // Return the existing user's role
+}
+
+// CreateUser creates a new user
+func CreateAdmin(db *gorm.DB, telegram_id int64) (models.Users, error) {
+	var user models.Users
+
+	// Check if the user already exists
+	if err := db.Where("telegram_id = ?", telegram_id).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// Create a new user if not found
+			user.Role = models.RoleAdmin // Set the default role
+			user.Telegram_ID = telegram_id
+			if err := db.Save(&user).Error; err != nil { // Pass &user instead of user
+				return user, err
+			}
+			return user, nil
+		}
+		return user, err // Handle unexpected errors
+	}
+
+	// for not existed admins
+	user.Role = models.RoleAdmin
+	err := db.Save(&user).Error
+	if err != nil {
+		return user, err
+	}
+	return user, nil // Return the existing user's role
 }
 
 // GetUserByID retrieves a user by their Telegram ID
-func GetUserByID(db *gorm.DB, userID string) (*models.Users, error) {
+func GetUserByID(db *gorm.DB, userID string) (models.Users, error) {
 	var user models.Users
 	if err := db.Where("id = ?", userID).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, err
+		return user, err
 	}
-	return &user, nil
+	return user, nil
 }
 
 // GetAllUsersPaginated retrieves users with pagination

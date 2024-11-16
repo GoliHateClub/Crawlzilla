@@ -59,91 +59,160 @@ func TestValidateAdData(t *testing.T) {
 		expectErr bool
 	}{
 		{
-			name: "Valid Crawl Result",
+			name: "Valid Ad Data",
 			result: &models.Ads{
-				Title:       "Valid Title",
-				LocationURL: "https://valid.url",
-				Price:       100,
-				Latitude:    45.0,
-				Longitude:   90.0,
+				Title:         "Valid Title",
+				Price:         100,
+				Latitude:      45.0,
+				Longitude:     90.0,
+				ContactNumber: "09121111111",
+				CategoryType:  "فروش",
+				PropertyType:  "آپارتمانی",
 			},
 			expectErr: false,
 		},
 		{
 			name: "Empty Title",
 			result: &models.Ads{
-				Title:       "",
-				LocationURL: "https://valid.url",
-				Price:       100,
-				Latitude:    45.0,
-				Longitude:   90.0,
+				Title:         "",
+				Price:         100,
+				Latitude:      45.0,
+				Longitude:     90.0,
+				ContactNumber: "09121111111",
+				CategoryType:  "فروش",
+				PropertyType:  "آپارتمانی",
 			},
 			expectErr: true,
 		},
-		// Additional tests here...
+		{
+			name: "Invalid Category Type",
+			result: &models.Ads{
+				Title:         "Valid Title",
+				Price:         100,
+				Latitude:      45.0,
+				Longitude:     90.0,
+				ContactNumber: "0",
+				CategoryType:  "invalid",
+				PropertyType:  "آپارتمانی",
+			},
+			expectErr: true,
+		},
+		{
+			name: "Invalid Latitude",
+			result: &models.Ads{
+				Title:         "Valid Title",
+				Price:         100,
+				Latitude:      100.0, // Invalid latitude
+				Longitude:     90.0,
+				ContactNumber: "09121111111",
+				CategoryType:  "فروش",
+				PropertyType:  "آپارتمانی",
+			},
+			expectErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := super_admin.ValidateAdData(tt.result)
 			if (err != nil) != tt.expectErr {
-				t.Errorf("ValidateAdData() error = %v, wantErr %v", err, tt.expectErr)
-			}
-			if err != nil && !tt.expectErr {
-				t.Errorf("unexpected error: %v", err)
+				t.Errorf("ValidateAdData() error = %v, expectErr %v", err, tt.expectErr)
 			}
 		})
 	}
 }
 
-func TestAddAdForSuperAdmin(t *testing.T) {
+func TestCreateAd(t *testing.T) {
 	db := SetupTestDB()
 
 	tests := []struct {
 		name      string
-		result    *models.Ads
+		inputAd   *models.Ads
 		expectErr bool
+		validate  func(t *testing.T, ad *models.Ads)
 	}{
 		{
-			name: "Valid Crawl Result",
-			result: &models.Ads{
-				Title:       "Valid Title",
-				LocationURL: "https://valid.url",
-				Price:       100,
-				Latitude:    45.0,
-				Longitude:   90.0,
+			name: "Valid Ad Data",
+			inputAd: &models.Ads{
+				Title:         "Valid Title",
+				Price:         100,
+				Latitude:      45.0,
+				Longitude:     90.0,
+				CategoryType:  "فروش",      // Persian for "sell"
+				PropertyType:  "آپارتمانی", // Persian for "house"
+				ContactNumber: "09123456789",
 			},
 			expectErr: false,
+			validate: func(t *testing.T, ad *models.Ads) {
+				assert.Equal(t, "Valid Title", ad.Title)
+				assert.Equal(t, "sell", ad.CategoryType)
+				assert.Equal(t, "house", ad.PropertyType)
+				assert.Contains(t, ad.URL, "super-admin-")
+				assert.NotEmpty(t, ad.LocationURL)
+			},
 		},
 		{
-			name: "Invalid Crawl Result - Empty Title",
-			result: &models.Ads{
-				Title:       "",
-				LocationURL: "https://valid.url",
-				Price:       100,
-				Latitude:    45.0,
-				Longitude:   90.0,
+			name: "Invalid Ad Data - Empty Title",
+			inputAd: &models.Ads{
+				Title:         "",
+				Price:         100,
+				Latitude:      45.0,
+				Longitude:     90.0,
+				CategoryType:  "فروش",
+				PropertyType:  "آپارتمانی",
+				ContactNumber: "09123456789",
+			},
+			expectErr: true,
+		},
+		{
+			name: "Invalid Ad Data - Invalid Phone Number",
+			inputAd: &models.Ads{
+				Title:         "Valid Title",
+				Price:         100,
+				Latitude:      45.0,
+				Longitude:     90.0,
+				CategoryType:  "فروش",
+				PropertyType:  "آپارتمانی",
+				ContactNumber: "invalid-phone",
+			},
+			expectErr: true,
+		},
+		{
+			name: "Invalid Ad Data - Invalid Coordinates",
+			inputAd: &models.Ads{
+				Title:         "Valid Title",
+				Price:         100,
+				Latitude:      100.0, // Out of range
+				Longitude:     200.0, // Out of range
+				CategoryType:  "فروش",
+				PropertyType:  "آپارتمانی",
+				ContactNumber: "09123456789",
 			},
 			expectErr: true,
 		},
 	}
 
-	// Loop over the test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Call the function with the mock database
-			err := super_admin.CreateAd(tt.result, db)
-			if (err != nil) != tt.expectErr {
-				t.Errorf("AddAdForSuperAdmin() error = %v, wantErr %v", err, tt.expectErr)
-			}
+			// Clean the database before each test
+			db.Exec("DELETE FROM ads")
 
-			// If no error is expected, check the data was actually inserted
-			if !tt.expectErr {
-				var ad models.Ads
-				db.First(&ad, "title = ?", tt.result.Title)
-				assert.Equal(t, tt.result.Title, ad.Title)
-				assert.Equal(t, tt.result.Price, ad.Price)
-				assert.Equal(t, tt.result.LocationURL, ad.LocationURL)
+			// Call CreateAd
+			err := super_admin.CreateAd(db, tt.inputAd)
+
+			// Assert error presence
+			if tt.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+
+				// Validate the inserted ad
+				var savedAd models.Ads
+				err := db.First(&savedAd, "title = ?", tt.inputAd.Title).Error
+				assert.NoError(t, err)
+				if tt.validate != nil {
+					tt.validate(t, &savedAd)
+				}
 			}
 		})
 	}

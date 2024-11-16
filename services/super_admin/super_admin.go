@@ -3,23 +3,24 @@ package super_admin
 import (
 	"Crawlzilla/database/repositories"
 	"Crawlzilla/models"
+	"Crawlzilla/utils"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
 )
 
-func IsSuperAdmin(userID int64) bool {
+func IsSuperAdmin(telegram_id int64) bool {
 	superAdminId, err := strconv.ParseInt(os.Getenv("SUPER_ADMIN_ID"), 10, 64)
 	if err != nil {
 		return false
 	}
-	fmt.Println(superAdminId)
-	return superAdminId == userID
+	return superAdminId == telegram_id
 }
 
 // ValidateAdData validates the data fields in a Ads
@@ -30,13 +31,31 @@ func ValidateAdData(result *models.Ads) error {
 	if err := validateTitle(result.Title); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
-	if err := validateLocationURL(result.LocationURL); err != nil {
+	if err := validateNumber(result.Price); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
-	if err := validateURL(result.URL); err != nil { // Use validateURL here
+	if err := validateNumber(result.Rent); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
-	if err := validatePrice(result.Price); err != nil {
+	if err := validateNumber(result.Area); err != nil {
+		validationErrors = append(validationErrors, err.Error())
+	}
+	if err := validateNumber(result.Room); err != nil {
+		validationErrors = append(validationErrors, err.Error())
+	}
+	if err := validateNumber(result.FloorNumber); err != nil {
+		validationErrors = append(validationErrors, err.Error())
+	}
+	if err := validateNumber(result.TotalFloors); err != nil {
+		validationErrors = append(validationErrors, err.Error())
+	}
+	if err := validateCategory(result.CategoryType); err != nil {
+		validationErrors = append(validationErrors, err.Error())
+	}
+	if err := validateProperty(result.PropertyType); err != nil {
+		validationErrors = append(validationErrors, err.Error())
+	}
+	if err := validatePhoneNumber(result.ContactNumber); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
 	if err := validateCoordinates(result.Latitude, result.Longitude); err != nil {
@@ -61,18 +80,41 @@ func validateTitle(title string) error {
 	return nil
 }
 
-// validateLocationURL checks if the location URL is valid
-func validateLocationURL(url string) error {
-	if len(url) > 255 {
-		return errors.New("location URL length exceeds 255 characters")
+// validateNumber checks if the number is non-negative
+func validateNumber(number int) error {
+	if number < 0 {
+		return errors.New("number cannot be negative")
 	}
 	return nil
 }
 
-// validatePrice checks if the price is non-negative
-func validatePrice(price int) error {
-	if price < 0 {
-		return errors.New("price cannot be negative")
+// validateCategory checks if the category is valid
+func validateCategory(categoryType string) error {
+	if categoryType != "فروش" && categoryType != "رهن اجاره" {
+		return errors.New("category type is wrong")
+	}
+	return nil
+}
+
+// validateCategory checks if the category is valid
+func validateProperty(propertyType string) error {
+	if propertyType != "آپارتمانی" && propertyType != "ویلایی" {
+		return errors.New("property type is wrong")
+	}
+	return nil
+}
+
+// validatePhoneNumber checks if phoneNumber is all numbers, starts with 0, and is exactly 11 characters long
+func validatePhoneNumber(phoneNumber string) error {
+	// Define the regex pattern
+	pattern := `^0(\d{10})?$` // Starts with 0, followed by exactly 10 digits (total 11 characters)
+
+	// Compile the regex
+	re := regexp.MustCompile(pattern)
+
+	// Validate the phone number
+	if !re.MatchString(phoneNumber) {
+		return errors.New("phone number is invalid")
 	}
 	return nil
 }
@@ -88,19 +130,8 @@ func validateCoordinates(lat, long float64) error {
 	return nil
 }
 
-// validateURL checks if the provided URL is a valid URL or not.
-func validateURL(url string) error {
-	if url == "" {
-		return errors.New("URL cannot be empty")
-	}
-	if len(url) > 255 {
-		return errors.New("URL length exceeds 255 characters")
-	}
-	return nil
-}
-
 // CreateAd attempts to save the ad, letting GORM handle model validation constraints
-func CreateAd(result *models.Ads, database *gorm.DB) error {
+func CreateAd(database *gorm.DB, result *models.Ads) error {
 	if result == nil {
 		return fmt.Errorf("result cannot be nil")
 	}
@@ -109,8 +140,27 @@ func CreateAd(result *models.Ads, database *gorm.DB) error {
 		return err
 	}
 
+	// generate URL
+	result.URL = "super-admin-" + utils.GenerateRandomNumber(5)
+	// generate locationURL
+	result.LocationURL = fmt.Sprintf("https://balad.ir/location?latitude=%v&longitude=%v", result.Latitude, result.Longitude)
+	// generate reference
+	result.Reference = "admin"
+
+	// generate Category and Property Type
+	if result.CategoryType == "فروش" {
+		result.CategoryType = "sell"
+	} else {
+		result.CategoryType = "rent"
+	}
+	if result.PropertyType == "آپارتمانی" {
+		result.PropertyType = "house"
+	} else {
+		result.PropertyType = "vila"
+	}
+
 	if _, err := repositories.CreateAd(database, result); err != nil {
-		log.Fatalf("Failed to add data: %v", err)
+		log.Printf("Failed to add data: %v", err)
 	} else {
 		fmt.Println("Data has been added to the DB successfully!")
 	}
