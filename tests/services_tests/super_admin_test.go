@@ -61,52 +61,52 @@ func TestValidateAdData(t *testing.T) {
 		{
 			name: "Valid Ad Data",
 			result: &models.Ads{
-				Title:        "Valid Title",
-				LocationURL:  "https://valid.url",
-				Price:        100,
-				Latitude:     45.0,
-				Longitude:    90.0,
-				CategoryType: "فروش",
-				PropertyType: "مسکونی",
+				Title:         "Valid Title",
+				Price:         100,
+				Latitude:      45.0,
+				Longitude:     90.0,
+				ContactNumber: "09121111111",
+				CategoryType:  "فروش",
+				PropertyType:  "آپارتمانی",
 			},
 			expectErr: false,
 		},
 		{
 			name: "Empty Title",
 			result: &models.Ads{
-				Title:        "",
-				LocationURL:  "https://valid.url",
-				Price:        100,
-				Latitude:     45.0,
-				Longitude:    90.0,
-				CategoryType: "فروش",
-				PropertyType: "مسکونی",
+				Title:         "",
+				Price:         100,
+				Latitude:      45.0,
+				Longitude:     90.0,
+				ContactNumber: "09121111111",
+				CategoryType:  "فروش",
+				PropertyType:  "آپارتمانی",
 			},
 			expectErr: true,
 		},
 		{
 			name: "Invalid Category Type",
 			result: &models.Ads{
-				Title:        "Valid Title",
-				LocationURL:  "https://valid.url",
-				Price:        100,
-				Latitude:     45.0,
-				Longitude:    90.0,
-				CategoryType: "invalid",
-				PropertyType: "مسکونی",
+				Title:         "Valid Title",
+				Price:         100,
+				Latitude:      45.0,
+				Longitude:     90.0,
+				ContactNumber: "0",
+				CategoryType:  "invalid",
+				PropertyType:  "آپارتمانی",
 			},
 			expectErr: true,
 		},
 		{
 			name: "Invalid Latitude",
 			result: &models.Ads{
-				Title:        "Valid Title",
-				LocationURL:  "https://valid.url",
-				Price:        100,
-				Latitude:     100.0, // Invalid latitude
-				Longitude:    90.0,
-				CategoryType: "فروش",
-				PropertyType: "مسکونی",
+				Title:         "Valid Title",
+				Price:         100,
+				Latitude:      100.0, // Invalid latitude
+				Longitude:     90.0,
+				ContactNumber: "09121111111",
+				CategoryType:  "فروش",
+				PropertyType:  "آپارتمانی",
 			},
 			expectErr: true,
 		},
@@ -122,48 +122,71 @@ func TestValidateAdData(t *testing.T) {
 	}
 }
 
-func TestAddAdForSuperAdmin(t *testing.T) {
-	// Setup test database
+func TestCreateAd(t *testing.T) {
 	db := SetupTestDB()
 
 	tests := []struct {
 		name      string
-		result    *models.Ads
+		inputAd   *models.Ads
 		expectErr bool
+		validate  func(t *testing.T, ad *models.Ads)
 	}{
 		{
 			name: "Valid Ad Data",
-			result: &models.Ads{
-				Title:        "Valid Title",
-				Price:        100,
-				Latitude:     45.0,
-				Longitude:    90.0,
-				CategoryType: "فروش",      // Persian word for "sell"
-				PropertyType: "آپارتمانی", // Persian word for "house"
+			inputAd: &models.Ads{
+				Title:         "Valid Title",
+				Price:         100,
+				Latitude:      45.0,
+				Longitude:     90.0,
+				CategoryType:  "فروش",      // Persian for "sell"
+				PropertyType:  "آپارتمانی", // Persian for "house"
+				ContactNumber: "09123456789",
 			},
 			expectErr: false,
+			validate: func(t *testing.T, ad *models.Ads) {
+				assert.Equal(t, "Valid Title", ad.Title)
+				assert.Equal(t, "sell", ad.CategoryType)
+				assert.Equal(t, "house", ad.PropertyType)
+				assert.Contains(t, ad.URL, "super-admin-")
+				assert.NotEmpty(t, ad.LocationURL)
+			},
 		},
 		{
 			name: "Invalid Ad Data - Empty Title",
-			result: &models.Ads{
-				Title:        "",
-				Price:        100,
-				Latitude:     45.0,
-				Longitude:    90.0,
-				CategoryType: "فروش",
-				PropertyType: "آپارتمانی",
+			inputAd: &models.Ads{
+				Title:         "",
+				Price:         100,
+				Latitude:      45.0,
+				Longitude:     90.0,
+				CategoryType:  "فروش",
+				PropertyType:  "آپارتمانی",
+				ContactNumber: "09123456789",
 			},
 			expectErr: true,
 		},
 		{
-			name: "Invalid Ad Data - Invalid Category Type",
-			result: &models.Ads{
-				Title:        "Valid Title",
-				Price:        100,
-				Latitude:     45.0,
-				Longitude:    90.0,
-				CategoryType: "invalid", // Invalid category type
-				PropertyType: "آپارتمانی",
+			name: "Invalid Ad Data - Invalid Phone Number",
+			inputAd: &models.Ads{
+				Title:         "Valid Title",
+				Price:         100,
+				Latitude:      45.0,
+				Longitude:     90.0,
+				CategoryType:  "فروش",
+				PropertyType:  "آپارتمانی",
+				ContactNumber: "invalid-phone",
+			},
+			expectErr: true,
+		},
+		{
+			name: "Invalid Ad Data - Invalid Coordinates",
+			inputAd: &models.Ads{
+				Title:         "Valid Title",
+				Price:         100,
+				Latitude:      100.0, // Out of range
+				Longitude:     200.0, // Out of range
+				CategoryType:  "فروش",
+				PropertyType:  "آپارتمانی",
+				ContactNumber: "09123456789",
 			},
 			expectErr: true,
 		},
@@ -171,30 +194,25 @@ func TestAddAdForSuperAdmin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Clean up database before each test
+			// Clean the database before each test
 			db.Exec("DELETE FROM ads")
 
-			err := super_admin.CreateAd(db, tt.result)
+			// Call CreateAd
+			err := super_admin.CreateAd(db, tt.inputAd)
 
-			// Validate error presence
-			if (err != nil) != tt.expectErr {
-				t.Errorf("CreateAd() error = %v, expectErr %v", err, tt.expectErr)
-			}
+			// Assert error presence
+			if tt.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 
-			// If no error is expected, validate data was saved correctly
-			if !tt.expectErr {
-				var ad models.Ads
-				if err := db.First(&ad, "title = ?", tt.result.Title).Error; err != nil {
-					t.Errorf("Ad was not inserted: %v", err)
-					return
+				// Validate the inserted ad
+				var savedAd models.Ads
+				err := db.First(&savedAd, "title = ?", tt.inputAd.Title).Error
+				assert.NoError(t, err)
+				if tt.validate != nil {
+					tt.validate(t, &savedAd)
 				}
-
-				// Validate transformations
-				assert.Equal(t, "sell", ad.CategoryType, "Expected transformed CategoryType to be 'sell'")
-				assert.Equal(t, "house", ad.PropertyType, "Expected transformed PropertyType to be 'house'")
-				assert.Equal(t, tt.result.Title, ad.Title, "Title mismatch")
-				assert.Equal(t, tt.result.Price, ad.Price, "Price mismatch")
-				assert.Contains(t, ad.URL, "super-admin-", "Expected URL to start with 'super-admin-'")
 			}
 		})
 	}
