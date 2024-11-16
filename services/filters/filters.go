@@ -139,6 +139,9 @@ func RemoveFilter(db *gorm.DB, userID, filterID string) error {
 
 // validateFilterFields validates all fields in the filter
 func validateFilterFields(filter models.Filters) error {
+	if err := validateTitle(filter.Title); err != nil {
+		return err
+	}
 	if err := validateArea(filter.MinArea, filter.MaxArea); err != nil {
 		return err
 	}
@@ -188,6 +191,13 @@ func validateFilterFields(filter models.Filters) error {
 
 	// No validation needed for booleans (HasElevator, HasStorage, HasParking, HasBalcony)
 
+	return nil
+}
+
+func validateTitle(title string) error {
+	if title == "" {
+		return errors.New("title cannot be empty")
+	}
 	return nil
 }
 

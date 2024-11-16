@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -18,7 +20,8 @@ const (
 type Users struct {
 	ID          string `gorm:"type:uuid;primary_key;"`
 	Telegram_ID int64
-	Role        Role `gorm:"type:varchar(15)"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	Role        Role      `gorm:"type:varchar(15)"`
 
 	Filers []Filters `gorm:"foreignKey:USER_ID"`
 }
