@@ -10,8 +10,8 @@ func HandleCommands(ctx context.Context, update tgbotapi.Update) {
 	switch update.Message.Command() {
 	case "start":
 		commands.CommandStart(ctx, update)
-	case "addAd":
-		//startAddAdConversation(bot, update.Message)
+	case "menu":
+		commands.ShowMenu(ctx, update)
 	}
 	return
 }

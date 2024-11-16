@@ -1,7 +1,6 @@
 package commands
 
 import (
-	cfg "Crawlzilla/logger"
 	"Crawlzilla/services/bot/keyboards"
 	"Crawlzilla/services/bot/menus"
 	"Crawlzilla/services/super_admin"
@@ -12,21 +11,37 @@ import (
 
 func CommandStart(ctx context.Context, update tgbotapi.Update) {
 	bot := ctx.Value("bot").(*tgbotapi.BotAPI)
-	configLogger := ctx.Value("configLogger").(cfg.ConfigLoggerType)
-	botLogger, _ := configLogger("bot")
 
-	isAdmin := super_admin.IsSuperAdmin(int64(update.Message.From.ID))
+	isAdmin := super_admin.IsSuperAdmin(update.Message.From.ID)
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "سلام به بات ما خوش اومدی!")
 
 	msg.ReplyMarkup = keyboards.InlineKeyboard(menus.MainMenu, isAdmin)
 
-	_, err := bot.Send(msg)
+	bot.Send(msg)
 
-	if err != nil {
-		println(err.Error())
-		botLogger.Error("Error while sending welcome message.",
-			zap.Error(err), zap.String("user_id", strconv.Itoa(update.Message.From.ID)),
-		)
-	}
+	cmdCfg := tgbotapi.NewSetMyCommands(
+		tgbotapi.BotCommand{
+			Command:     "/start",
+			Description: "شروع بات",
+		},
+		tgbotapi.BotCommand{
+			Command:     "/menu",
+			Description: "منو بات",
+		},
+	)
+
+	bot.Send(cmdCfg)
+}
+
+func ShowMenu(ctx context.Context, update tgbotapi.Update) {
+	bot := ctx.Value("bot").(*tgbotapi.BotAPI)
+
+	isAdmin := super_admin.IsSuperAdmin(update.Message.From.ID)
+
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "منو خدمت شما")
+
+	msg.ReplyMarkup = keyboards.InlineKeyboard(menus.MainMenu, isAdmin)
+
+	bot.Send(msg)
 }
