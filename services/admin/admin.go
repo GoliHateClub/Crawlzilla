@@ -28,7 +28,7 @@ func IsAdmin(db *gorm.DB, telegramID int64) (bool, error) {
 
 // RemoveAdmin deletes the admin user by their Telegram ID (int64).
 func RemoveAdmin(db *gorm.DB, telegramID int64) error {
-	err := repositories.RemoveAdminByTelegramID(db, telegramID)
+	err := repositories.RemoveAdminByID(db, telegramID)
 	if err != nil {
 		return err
 	}
