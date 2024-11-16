@@ -7,7 +7,7 @@ import (
 )
 
 // CreateAdminUser creates a new user with the admin role
-func CreateAdminUser(db *gorm.DB, telegramID string) (models.Role, error) {
+func CreateAdminUser(db *gorm.DB, telegramID int64) (models.Role, error) {
 	role, err := repositories.CreateAdmin(db, telegramID)
 	if err != nil {
 		return "", err
@@ -17,7 +17,7 @@ func CreateAdminUser(db *gorm.DB, telegramID string) (models.Role, error) {
 }
 
 // IsAdmin checks if a user is an admin by their Telegram ID
-func IsAdmin(db *gorm.DB, telegramID string) (bool, error) {
+func IsAdmin(db *gorm.DB, telegramID int64) (bool, error) {
 
 	user, err := repositories.GetAdminByID(db, telegramID)
 	if err != nil {

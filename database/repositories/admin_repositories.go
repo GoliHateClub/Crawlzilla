@@ -7,15 +7,15 @@ import (
 )
 
 // CreateAdmin creates an admin if it doesn't exist or make an existing user to be an admin.
-func CreateAdmin(db *gorm.DB, userID string) (models.Role, error) {
+func CreateAdmin(db *gorm.DB, telegramID int64) (models.Role, error) {
 	var user models.Users
 
-	err := db.Where("id = ?", userID).First(&user).Error
+	err := db.Where("telegram_id = ?", telegramID).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			newAdmin := models.Users{
-				ID:   userID,
-				Role: models.RoleAdmin,
+				Telegram_ID: telegramID,
+				Role:        models.RoleAdmin,
 			}
 			if err := db.Create(&newAdmin).Error; err != nil {
 				return "", err
@@ -36,7 +36,7 @@ func CreateAdmin(db *gorm.DB, userID string) (models.Role, error) {
 }
 
 // GetAdminByID retrieves a user with the "admin" role by their Telegram ID
-func GetAdminByID(db *gorm.DB, telegramID string) (*models.Users, error) {
+func GetAdminByID(db *gorm.DB, telegramID int64) (*models.Users, error) {
 	var user models.Users
 	err := db.Where("telegram_id = ? AND role = ?", telegramID, models.RoleAdmin).First(&user).Error
 	if err != nil {
