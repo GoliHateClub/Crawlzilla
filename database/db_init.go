@@ -3,6 +3,7 @@ package database
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"Crawlzilla/models"
 
@@ -40,12 +41,13 @@ func SetupDB() (*gorm.DB, error) {
 	if err != nil {
 		log.Fatalf("Failed to check for initial user: %v", err)
 	}
-	super_admin_id := os.Getenv("SUPER_ADMIN_ID")
+	super_admin_id_str := os.Getenv("SUPER_ADMIN_ID")
+	super_admin_id, err := strconv.Atoi(super_admin_id_str)
 	// If no user found with the 'super-admin' role, create an initial super-admin
-	if count == 0 && super_admin_id != "" {
+	if count == 0 && super_admin_id_str != "" {
 		initialUser := models.Users{
 			ID:          uuid.NewString(),
-			Telegram_ID: super_admin_id,
+			Telegram_ID: int64(super_admin_id),
 			Role:        "super-admin",
 		}
 		err = db.Create(&initialUser).Error

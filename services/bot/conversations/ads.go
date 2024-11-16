@@ -9,13 +9,15 @@ import (
 	"Crawlzilla/utils"
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"log"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"go.uber.org/zap"
+
 	cfg "Crawlzilla/logger"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -208,7 +210,7 @@ func AddAdConversation(ctx context.Context, state cache.UserState, update tgbota
 		ad.Latitude = update.Message.Location.Latitude
 		ad.Longitude = update.Message.Location.Longitude
 
-		err = super_admin.CreateAd(&ad, database.DB)
+		err = super_admin.CreateAd(database.DB, &ad)
 
 		if err != nil {
 			println(err)

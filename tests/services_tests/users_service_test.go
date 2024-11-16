@@ -5,7 +5,6 @@ import (
 	"Crawlzilla/models"
 	"Crawlzilla/services/users"
 	"log"
-	"strconv"
 	"testing"
 
 	"github.com/glebarez/sqlite"
@@ -25,7 +24,7 @@ func TestGetAllUsersPaginatedService(t *testing.T) {
 
 	// Insert test users
 	for i := 0; i < 25; i++ {
-		user := models.Users{Telegram_ID: "user_" + strconv.Itoa(i)}
+		user := models.Users{Telegram_ID: int64(i)}
 		repositories.CreateUser(db, user.Telegram_ID)
 	}
 
@@ -50,7 +49,7 @@ func TestGetUserByIDService(t *testing.T) {
 
 	// Insert a test user
 	user := models.Users{
-		Telegram_ID: "testTelegramID",
+		Telegram_ID: int64(12345),
 		Role:        "super-admin",
 	}
 	user, err := repositories.CreateUser(db, user.Telegram_ID)
