@@ -66,3 +66,26 @@ func RemoveAdminByTelegramID(db *gorm.DB, telegramID int64) error {
 
 	return nil
 }
+
+// GetAdminsPaginated retrieves paginated admin data from the database.
+func GetAdminsPaginated(db *gorm.DB, page int, pageSize int) ([]models.Users, int64, error) {
+	var admins []models.Users
+	var totalRecords int64
+
+	if err := db.Model(&models.Users{}).
+		Where("role = ?", "admin").
+		Count(&totalRecords).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * pageSize
+
+	if err := db.Where("role = ?", "admin").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&admins).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return admins, totalRecords, nil
+}

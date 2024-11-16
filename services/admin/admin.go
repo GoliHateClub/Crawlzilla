@@ -35,3 +35,13 @@ func RemoveAdmin(db *gorm.DB, telegramID int64) error {
 
 	return nil
 }
+
+// GetAdmins fetches paginated admins data from the database.
+func GetAdmins(db *gorm.DB, page int, pageSize int) ([]models.Users, int64, error) {
+	admins, total, err := repositories.GetAdminsPaginated(db, page, pageSize)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return admins, total, nil
+}
