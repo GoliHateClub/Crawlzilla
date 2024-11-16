@@ -41,6 +41,45 @@ func CreateActionCache(ctx context.Context) *ActionCache {
 	}
 }
 
+func (s *ActionCache) UpdateActionCache(ctx context.Context, chatID int64, updates map[string]interface{}) error {
+	// Get the current state from Redis
+	currentState, err := s.GetActionState(ctx, chatID)
+	if err != nil {
+		return err
+	}
+
+	// Apply updates to the current state
+	for key, value := range updates {
+		switch key {
+		case "Conversation":
+			if conversation, ok := value.(string); ok {
+				currentState.Conversation = conversation
+			}
+		case "Action":
+			if action, ok := value.(string); ok {
+				currentState.Action = action
+			}
+		case "UserId":
+			if userID, ok := value.(int64); ok {
+				currentState.UserId = userID
+			}
+		case "ChatId":
+			if chatID, ok := value.(int64); ok {
+				currentState.ChatId = chatID
+			}
+		case "ActionData":
+			if actionData, ok := value.(map[string]interface{}); ok {
+				currentState.ActionData = actionData
+			}
+		default:
+			return errors.New("invalid field in updates")
+		}
+	}
+
+	// Save the updated state back to Redis
+	return s.SetUserState(ctx, chatID, currentState)
+}
+
 func (s *ActionCache) SetUserState(ctx context.Context, chatID int64, state ActionState) error {
 	key := getActionStateKey(chatID)
 
