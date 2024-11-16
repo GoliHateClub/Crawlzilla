@@ -9,15 +9,13 @@ import (
 	"Crawlzilla/utils"
 	"context"
 	"fmt"
+	"go.uber.org/zap"
 	"log"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"go.uber.org/zap"
-
 	cfg "Crawlzilla/logger"
-
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -55,7 +53,7 @@ func AddAdConversation(ctx context.Context, state cache.UserState, update tgbota
 		}
 	case "check_data_get_desc":
 		// Define a regex pattern to extract each field
-		pattern := `(?m)- نام\s*(.+)\n- آدرس لوکیشن در بلد\s*(.+)\n- آدرس URL محصول در سایت\s*(.+)\n- شهر\s*(.+)\n- محله\s*(.+)\n- منبع آگهی\s*(.+)\n- نوع آگهی\s*(.+)\n- نوع ملک\s*(.+)\n- متراژ\s*(\d+)\n- قیمت\(به ریال\)\s*(\d+)\n- اجاره\(ریال\)\s*(\d+)\n- تعداد اتاق\s*(\d+)\n- طبقه واحد\s*(\d+)\n- تعداد طبقات ملک\s*(\d+)\n- شماره تماس\s*(\d+)\n- آسانسور دارد؟\s*(بله|خیر)\n- انباری دارد؟\s*(بله|خیر)\n- پارکینگ دارد؟\s*(بله|خیر)\n- بالکن دارد؟\s*(بله|خیر)`
+		pattern := `(?m)- نام\s*(.+)\n- شهر\s*(.+)\n- محله\s*(.+)\n- نوع آگهی \(فروش/خرید\)\s*(.+)\n- نوع ملک \(آپارتمانی/ویلایی\)\s*(.+)\n- متراژ\s*(\d+)\n- قیمت \(به تومان\)\s*(\d+)\n- اجاره \(به تومان\)\s*(\d+)\n- تعداد اتاق\s*(\d+)\n- طبقه واحد\s*(\d+)\n- تعداد طبقات ملک\s*(\d+)\n- شماره تماس \(همراه با 0\)\s*(\d+)\n- آسانسور دارد؟ \(فقط آپارتمانی\)\s*(بله|خیر)\n- انباری دارد؟\s*(بله|خیر)\n- پارکینگ دارد؟\s*(بله|خیر)\n- بالکن دارد؟\s*(بله|خیر)`
 
 		re := regexp.MustCompile(pattern)
 
@@ -80,33 +78,31 @@ func AddAdConversation(ctx context.Context, state cache.UserState, update tgbota
 			return s == "بله"
 		}
 
-		area := handeConvertError(matches[9])
-		price := handeConvertError(matches[10])
-		rent := handeConvertError(matches[11])
-		room := handeConvertError(matches[12])
-		floorNumber := handeConvertError(matches[13])
-		totalFloors := handeConvertError(matches[14])
+		area := handeConvertError(matches[6])
+		price := handeConvertError(matches[7])
+		rent := handeConvertError(matches[8])
+		room := handeConvertError(matches[9])
+		floorNumber := handeConvertError(matches[10])
+		totalFloors := handeConvertError(matches[11])
 
 		newAd := models.Ads{
-			Title:        matches[1],
-			LocationURL:  matches[2],
-			URL:          matches[3],
-			City:         matches[4],
-			Neighborhood: matches[5],
-			Reference:    matches[6],
-			CategoryType: matches[7],
-			PropertyType: matches[8],
-			Area:         area,
-			Price:        price,
-			Rent:         rent,
-			Room:         room,
-			FloorNumber:  floorNumber,
-			TotalFloors:  totalFloors,
-			VisitCount:   0,
-			HasElevator:  isBool(matches[16]),
-			HasStorage:   isBool(matches[17]),
-			HasParking:   isBool(matches[18]),
-			HasBalcony:   isBool(matches[19]),
+			Title:         matches[1],
+			City:          matches[2],
+			Neighborhood:  matches[3],
+			CategoryType:  matches[4],
+			PropertyType:  matches[5],
+			Area:          area,
+			Price:         price,
+			Rent:          rent,
+			Room:          room,
+			FloorNumber:   floorNumber,
+			TotalFloors:   totalFloors,
+			VisitCount:    0,
+			ContactNumber: matches[12],
+			HasElevator:   isBool(matches[13]),
+			HasStorage:    isBool(matches[14]),
+			HasParking:    isBool(matches[15]),
+			HasBalcony:    isBool(matches[16]),
 		}
 
 		err := actionStates.SetUserState(ctx, state.ChatId, cache.ActionState{
@@ -218,6 +214,7 @@ func AddAdConversation(ctx context.Context, state cache.UserState, update tgbota
 			bot.Send(msg)
 			msg = tgbotapi.NewMessage(state.ChatId, err.Error())
 			bot.Send(msg)
+			return
 		}
 
 		err = userStates.ClearUserCache(ctx, state.ChatId)

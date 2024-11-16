@@ -1,18 +1,39 @@
 package commands
 
 import (
+	"Crawlzilla/database"
+	cfg "Crawlzilla/logger"
 	"Crawlzilla/services/bot/keyboards"
 	"Crawlzilla/services/bot/menus"
 	"Crawlzilla/services/super_admin"
+	"Crawlzilla/services/users"
 	"context"
+	"go.uber.org/zap"
+	"strconv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func CommandStart(ctx context.Context, update tgbotapi.Update) {
 	bot := ctx.Value("bot").(*tgbotapi.BotAPI)
+	configLogger := ctx.Value("configLogger").(cfg.ConfigLoggerType)
+	botLogger, _ := configLogger("bot")
 
 	isAdmin := super_admin.IsSuperAdmin(update.Message.From.ID)
+
+	_, err := users.LoginUser(database.DB, strconv.FormatInt(update.SentFrom().ID, 10))
+
+	if err != nil {
+		botLogger.Error(
+			"Error while calling login user",
+			zap.Error(err),
+			zap.String("user_id", strconv.FormatInt(update.SentFrom().ID, 10)),
+		)
+
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "خطا نگام دریافت اطلاعات کاربر")
+		bot.Send(msg)
+		return
+	}
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "سلام به بات ما خوش اومدی!")
 
