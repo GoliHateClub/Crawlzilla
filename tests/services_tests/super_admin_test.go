@@ -272,3 +272,132 @@ func TestRemoveAdByID(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAdmins(t *testing.T) {
+	// Initialize test database
+	db := SetupTestDB()
+
+	// Create some admin users
+	telegramID1 := int64(12345)
+	telegramID2 := int64(67890)
+
+	_, err := super_admin.CreateAdminUser(db, telegramID1)
+	if err != nil {
+		t.Fatalf("Error creating admin 1: %v", err)
+	}
+
+	_, err = super_admin.CreateAdminUser(db, telegramID2)
+	if err != nil {
+		t.Fatalf("Error creating admin 2: %v", err)
+	}
+
+	// Retrieve paginated admins
+	page := 1
+	pageSize := 2
+	admins, total, err := super_admin.GetAdmins(db, page, pageSize)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if total != 2 {
+		t.Fatalf("Expected 2 total admins, got %d", total)
+	}
+
+	if len(admins) != 2 {
+		t.Fatalf("Expected 2 admins in the result, got %d", len(admins))
+	}
+
+	// Check if the retrieved admins match the ones created
+	if admins[0].Telegram_ID != telegramID1 && admins[1].Telegram_ID != telegramID2 {
+		t.Fatalf("Admins retrieved don't match the ones created")
+	}
+}
+
+func TestRemoveAdmin(t *testing.T) {
+	// Initialize test database
+	db := SetupTestDB()
+
+	// Define the test user Telegram ID
+	telegramID := int64(12345)
+
+	// Create the admin user
+	_, err := super_admin.CreateAdminUser(db, telegramID)
+	if err != nil {
+		t.Fatalf("Error creating admin: %v", err)
+	}
+
+	// Remove the admin user
+	err = super_admin.RemoveAdmin(db, telegramID)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	// Verify the user is removed from the database
+	var user models.Users
+	if err := db.Where("telegram_id = ?", telegramID).First(&user).Error; err == nil {
+		t.Fatalf("Expected user to be removed, but got user %+v", user)
+	}
+}
+
+func TestIsAdmin(t *testing.T) {
+	// Initialize test database
+	db := SetupTestDB()
+
+	// Define the test user Telegram ID
+	telegramID := int64(12345)
+
+	// Create the admin user
+	_, err := super_admin.CreateAdminUser(db, telegramID)
+	if err != nil {
+		t.Fatalf("Error creating admin: %v", err)
+	}
+
+	// Check if the user is an admin
+	isAdmin, err := super_admin.IsAdmin(db, telegramID)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if !isAdmin {
+		t.Fatalf("Expected user to be an admin, but was not")
+	}
+
+	// Check for a non-existent user
+	isAdmin, err = super_admin.IsAdmin(db, int64(99999))
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if isAdmin {
+		t.Fatalf("Expected user to not be an admin, but they were")
+	}
+}
+
+func TestCreateAdminUser(t *testing.T) {
+	// Initialize test database
+	db := SetupTestDB()
+
+	// Define the test user Telegram ID
+	telegramID := int64(12345)
+
+	// Call the CreateAdminUser function
+	role, err := super_admin.CreateAdminUser(db, telegramID)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	// Check if the role is correctly set to "admin"
+	if role != "admin" {
+		t.Fatalf("Expected role 'admin', got %s", role)
+	}
+
+	// Check if the user is created in the database
+	var user models.Users
+	if err := db.Where("telegram_id = ?", telegramID).First(&user).Error; err != nil {
+		t.Fatalf("Expected user to be created, but got error: %v", err)
+	}
+
+	if user.Telegram_ID != telegramID || user.Role != "admin" {
+		t.Fatalf("Expected user with Telegram ID %d and role 'admin', got %+v", telegramID, user)
+	}
+}
