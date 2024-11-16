@@ -57,14 +57,14 @@ func GetAllFilters(db *gorm.DB, userID string, pageIndex, pageSize int) (Paginat
 	var totalRecords int64
 	offset := (pageIndex - 1) * pageSize
 
-	if user.Role == "super-admin" {
+	if user.Role == models.RoleSuperAdmin {
 		// Fetch all filters for all users
 		filters, totalRecords, err = repositories.GetFiltersForAllUsers(db, offset, pageSize)
 		if err != nil {
 			return PaginatedFilters{}, err
 		}
 
-	} else if user.Role == "admin" {
+	} else if user.Role == models.RoleAdmin {
 		// Fetch all filters but hide the USER_ID field
 		filters, totalRecords, err = repositories.GetFiltersForAllUsers(db, offset, pageSize)
 		if err != nil {
@@ -76,7 +76,7 @@ func GetAllFilters(db *gorm.DB, userID string, pageIndex, pageSize int) (Paginat
 			filters[i].USER_ID = ""
 		}
 
-	} else if user.Role == "user" {
+	} else if user.Role == models.RoleUser {
 		// Regular users are not authorized
 		return PaginatedFilters{}, errors.New("unauthorized access for regular users")
 	}
@@ -123,10 +123,10 @@ func RemoveFilter(db *gorm.DB, userID, filterID string) error {
 	}
 
 	// Role-based logic for deletion
-	if user.Role == "super-admin" {
+	if user.Role == models.RoleSuperAdmin {
 		// Super-admin can delete any filter
 		return repositories.RemoveFilter(db, filterID)
-	} else if user.Role == "admin" || user.Role == "user" {
+	} else if user.Role == models.RoleAdmin || user.Role == models.RoleUser {
 		// Admin or user can delete only their own filters
 		if filter.USER_ID != userID {
 			return errors.New("unauthorized to delete this filter")

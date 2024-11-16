@@ -7,14 +7,14 @@ import (
 )
 
 // CreateUser creates a new user
-func CreateUser(db *gorm.DB, telegram_id string) (models.Users, error) {
+func CreateUser(db *gorm.DB, telegram_id int64) (models.Users, error) {
 	var user models.Users
 
 	// Check if the user already exists
 	if err := db.Where("telegram_id = ?", telegram_id).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// Create a new user if not found
-			user.Role = "user" // Set the default role
+			user.Role = models.RoleUser // Set the default role
 			user.Telegram_ID = telegram_id
 			if err := db.Create(&user).Error; err != nil { // Pass &user instead of user
 				return user, err
@@ -22,6 +22,33 @@ func CreateUser(db *gorm.DB, telegram_id string) (models.Users, error) {
 			return user, nil
 		}
 		return user, err // Handle unexpected errors
+	}
+	return user, nil // Return the existing user's role
+}
+
+// CreateUser creates a new user
+func CreateAdmin(db *gorm.DB, telegram_id int64) (models.Users, error) {
+	var user models.Users
+
+	// Check if the user already exists
+	if err := db.Where("telegram_id = ?", telegram_id).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// Create a new user if not found
+			user.Role = models.RoleAdmin // Set the default role
+			user.Telegram_ID = telegram_id
+			if err := db.Save(&user).Error; err != nil { // Pass &user instead of user
+				return user, err
+			}
+			return user, nil
+		}
+		return user, err // Handle unexpected errors
+	}
+
+	// for not existed admins
+	user.Role = models.RoleAdmin
+	err := db.Save(&user).Error
+	if err != nil {
+		return user, err
 	}
 	return user, nil // Return the existing user's role
 }
