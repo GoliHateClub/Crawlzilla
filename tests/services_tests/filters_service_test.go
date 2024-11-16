@@ -1,7 +1,6 @@
 package services_tests
 
 import (
-	"Crawlzilla/database/repositories"
 	"Crawlzilla/models"
 	"Crawlzilla/services/filters"
 	"testing"
@@ -29,10 +28,6 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to set up test database: %v", err)
 	}
-
-	// Create a mock repository
-	mockRepo := repositories.NewFilterRepository()
-	s := filters.NewFilterService(mockRepo)
 
 	// Define test cases
 	tests := []struct {
@@ -135,7 +130,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 	// Run test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotID, err := s.CreateOrUpdateFilter(db, tt.filter)
+			gotID, err := filters.CreateOrUpdateFilter(db, tt.filter)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FilterService.CreateOrUpdateFilter() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -159,8 +154,6 @@ func TestFilterService_GetFiltersByUserID(t *testing.T) {
 
 	// Seed data
 	userID := "example-user-id"
-	mockRepo := repositories.NewFilterRepository()
-	s := filters.NewFilterService(mockRepo)
 
 	// Add sample filters to the database
 	sampleFilters := []models.Filters{
@@ -244,7 +237,7 @@ func TestFilterService_GetFiltersByUserID(t *testing.T) {
 	// Run test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := s.GetFiltersByUserID(db, tt.userID, tt.pageIndex, tt.pageSize)
+			result, err := filters.GetFiltersByUserID(db, tt.userID, tt.pageIndex, tt.pageSize)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FilterService.GetFiltersByUserID() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -291,10 +284,6 @@ func TestFilterService_GetAllFilters(t *testing.T) {
 	for _, filter := range filtersData {
 		db.Create(&filter)
 	}
-
-	// Create a mock repository and service
-	mockRepo := repositories.NewFilterRepository()
-	s := filters.NewFilterService(mockRepo)
 
 	// Define test cases
 	tests := []struct {
@@ -352,7 +341,7 @@ func TestFilterService_GetAllFilters(t *testing.T) {
 	// Run test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := s.GetAllFilters(db, tt.userID, tt.pageIndex, tt.pageSize)
+			result, err := filters.GetAllFilters(db, tt.userID, tt.pageIndex, tt.pageSize)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FilterService.GetAllFilters() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -410,10 +399,6 @@ func TestFilterService_RemoveFilter(t *testing.T) {
 		return nil
 	}
 
-	// Create a mock repository and service
-	mockRepo := repositories.NewFilterRepository()
-	s := filters.NewFilterService(mockRepo)
-
 	// Define test cases
 	tests := []struct {
 		name        string
@@ -439,7 +424,7 @@ func TestFilterService_RemoveFilter(t *testing.T) {
 				t.Fatalf("Failed to reset test database: %v", err)
 			}
 
-			err := s.RemoveFilter(db, tt.userID, tt.filterID)
+			err := filters.RemoveFilter(db, tt.userID, tt.filterID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FilterService.RemoveFilter() error = %v, wantErr %v", err, tt.wantErr)
 			}
