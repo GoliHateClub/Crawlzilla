@@ -44,5 +44,7 @@ func HandleConversation(ctx context.Context, update tgbotapi.Update) {
 	switch userState.Conversation {
 	case "add_ad":
 		conversations.AddAdConversation(ctx, userState, update)
+	case "add_filter":
+		conversations.AddFilterConversation(ctx, userState, update)
 	}
 }
