@@ -493,10 +493,8 @@ func ScrapPropertyPage(pageURL string) (models.Ads, error) {
 			log.Println("Cant get Contact Number:", err)
 		}
 		// Convert extracted Persian Contact number text to integer
-		result.ContactNumber, err = utils.ConvertPersianNumber(stringContactNumber)
-		if err != nil {
-			log.Println("Cant convert Contact string to int:", err)
-		}
+		result.ContactNumber = stringContactNumber
+
 	} else {
 		log.Println("phone number is not exist")
 	}

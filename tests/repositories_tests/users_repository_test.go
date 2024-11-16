@@ -3,7 +3,6 @@ package repositories_tests
 import (
 	"Crawlzilla/database/repositories"
 	"Crawlzilla/models"
-	"strconv"
 	"testing"
 
 	"github.com/glebarez/sqlite"
@@ -22,7 +21,7 @@ func TestCreateUser(t *testing.T) {
 	defer db.Exec("DROP TABLE users")
 
 	user := models.Users{
-		Telegram_ID: "test_telegram_id",
+		Telegram_ID: int64(12345),
 	}
 
 	user, err := repositories.CreateUser(db, user.Telegram_ID)
@@ -58,7 +57,7 @@ func TestGetAllUsersPaginated(t *testing.T) {
 
 	// Insert test users
 	for i := 0; i < 15; i++ {
-		user := models.Users{Telegram_ID: "user_" + strconv.Itoa(i), Role: models.RoleUser}
+		user := models.Users{Telegram_ID: int64(i), Role: models.RoleUser}
 		db.Create(&user)
 	}
 

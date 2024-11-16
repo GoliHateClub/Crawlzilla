@@ -1,4 +1,4 @@
-package admin
+package super_admin
 
 import (
 	"Crawlzilla/database/repositories"
