@@ -268,7 +268,7 @@ func TestFilterService_GetAllFilters(t *testing.T) {
 	// Seed users and filters
 	superAdmin := models.Users{ID: "super-admin-id", Role: "super-admin"}
 	admin := models.Users{ID: "admin-id", Role: "admin"}
-	user := models.Users{ID: "user-id", Role: "user"}
+	user := models.Users{ID: "user-id", Role: models.RoleUser}
 
 	db.Create(&superAdmin)
 	db.Create(&admin)
@@ -374,7 +374,7 @@ func TestFilterService_RemoveFilter(t *testing.T) {
 	// Seed users and filters
 	superAdmin := models.Users{ID: "super-admin-id", Role: "super-admin"}
 	admin := models.Users{ID: "admin-id", Role: "admin"}
-	user := models.Users{ID: "user-id", Role: "user"}
+	user := models.Users{ID: "user-id", Role: models.RoleUser}
 
 	db.Save(&superAdmin)
 	db.Save(&admin)

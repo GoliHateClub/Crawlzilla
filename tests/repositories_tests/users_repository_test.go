@@ -27,7 +27,7 @@ func TestCreateUser(t *testing.T) {
 
 	user, err := repositories.CreateUser(db, user.Telegram_ID)
 	assert.NoError(t, err, "Creating user should not return an error")
-	assert.Equal(t, user.Role, "user", "Role should match")
+	assert.Equal(t, user.Role, models.RoleUser, "Role should match")
 }
 
 func TestGetUserByID(t *testing.T) {
@@ -58,7 +58,7 @@ func TestGetAllUsersPaginated(t *testing.T) {
 
 	// Insert test users
 	for i := 0; i < 15; i++ {
-		user := models.Users{Telegram_ID: "user_" + strconv.Itoa(i), Role: "user"}
+		user := models.Users{Telegram_ID: "user_" + strconv.Itoa(i), Role: models.RoleUser}
 		db.Create(&user)
 	}
 
