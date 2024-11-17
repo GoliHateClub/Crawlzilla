@@ -13,14 +13,14 @@ This project is a magical crawler bot designed to collect listings from various 
 To run this project, follow these steps:
 
 1. **Install Prerequisites**: Ensure that Go and other project dependencies are installed.
-2. **Configure Dev file**: Put real data on the .env.example file and change the file name to .env
+2. **Configure Dev file**: Put real data on the `.env` file. You can use `.env.example`.
 3. **Run docker**: Start the docker using the following command:
    ```bash
    Docker compose up - d
    ```
 4. **Run the Project**: Start the project using the following command:
    ```bash
-   go run main.go
+   go run ./cmd/server.go
    ```
 5. **Access the Bot**: After running the project, you can communicate with the bot on Telegram to conduct your searches.
 
@@ -39,62 +39,42 @@ This command will execute all test files located in the tests directory. The -co
 
 ### 4. Project Structure
 
-The project is organized into various directories, each with a specific responsibility:
+This project is organized into multiple directories, each serving a specific purpose. Below is an overview of the key directories in the project:
    ```bash
    .
-├── Dockerfile                   # Docker setup for containerized deployment
-├── LICENSE                      # Project license
-├── Makefile                     # Automation of tasks like build, test, etc.
-├── README.md                    # Documentation file explaining the project
-├── cmd                          # Command line applications
-│   ├── bot
-│   │   └── main.go              # Entry point for the bot
-│   ├── crawler
-│   │   └── main.go              # Entry point for the crawler
-│   └── main.go                  # Main entry point for the project
-├── config
-│   └── config.go                # Project configuration settings
-├── database                     # Database-related code
-│   ├── repositories
-│   │   ├── bot_repo.go          # Bot database repository functions
-│   │   └── crawler_repo.go      # Crawler database repository functions
-│   └── setup-db.go              # Database setup and connection
-├── docker-compose.yml           # Docker Compose configuration
-├── docs
-│   └── project_structure.md     # Additional documentation on project structure
-├── go.mod                       # Go module dependencies
-├── go.sum                       # Checksum of Go module dependencies
-├── handlers                     # Handles API requests
-│   ├── bot
-│   │   ├── apiExtentions.go     # API extensions for bot
-│   │   ├── bootstrap.go         # Initialization setup for bot
-│   │   ├── handlers.go          # Handlers for bot routes
-│   │   ├── middlewares.go       # Middlewares for bot
-│   │   ├── routers.go           # Router definitions for bot
-│   │   └── views.go             # Views for bot routes
-│   └── crawler
-│       ├── fetcher
-│       │   └── fetcher.md       # Documentation on data fetching
-│       └── parser
-│           └── parser.md        # Documentation on parsing data
-├── logs
-│   └── logs.md                  # Log management documentation
-├── models                       # Data models for entities
-│   └── users
-│       ├── user.go              # User model definition
-│       └── user_interface.go    # Interface for user model
-├── monitoring
-│   └── prometheus
-│       └── monitoring.md        # Prometheus monitoring setup
-├── services                     # Service layer for business logic
-│   ├── bot
-│   │   └── bot_service.go       # Bot-related services
-│   └── crawler
-│       └── crawler_service.go   # Crawler-related services
-├── tests
-│   └── user_handler_test.go     # Unit tests for user handler
-└── utils
-    └── utils.go                 # Utility functions
+├───cmd                    # Entry point for the bot and crawler services
+│   ├───bot                # Bot service, handles Telegram bot logic and commands
+│   └───crawler            # Crawler service, handles web scraping and crawling logic
+├───config                 # Configuration files and environment variables
+├───database               # Database-related files, including repositories
+│   └───repositories       # Contains database queries and repository logic
+├───dockerfiles            # Docker-related files for containerization
+├───docs                   # Documentation related to the project
+├───logger                 # Logger configurations for structured logging
+├───logs                   # Application log files
+├───models                 # Database models and data structures
+├───services               # Business logic and core service implementations
+│   ├───ads                # Ad-related service functions (e.g., filtering, pagination)
+│   ├───bot                # Contains subdirectories related to the bot service
+│   │   ├───commands       # Bot commands and their handlers
+│   │   ├───constants      # Constants used throughout the bot service
+│   │   ├───conversations  # Conversation management for the bot
+│   │   ├───handlers       # Handlers for different bot interactions
+│   │   ├───keyboards      # Keyboard layouts for the bot
+│   │   └───menus          # Menu structure for bot navigation
+│   ├───cache              # Caching mechanisms for improving performance
+│   ├───crawler            # Crawling logic specific to Divar and other sites
+│   │   └───divar          # Divar-specific crawling implementation
+│   ├───filters            # Business logic for applying filters to data
+│   ├───search             # Search logic and algorithms
+│   ├───super_admin        # Functions and routes for super admin management
+│   └───users              # User-related service logic (e.g., user management, authentication)
+├───tests                  # Unit and integration tests for various components
+│   ├───models_tests       # Tests for model-related logic
+│   ├───repositories_tests # Tests for database repositories
+│   ├───services_tests     # Tests for service layer logic
+│   └───utils_tests        # Tests for utility functions
+└───utils                  # Utility functions and helpers used across the project
    ```
 
 ---
@@ -141,16 +121,18 @@ Planned future developments for this project include:
 
 - Listing Comparison
 - Price Change Chart
-- Support for More Websites
+- Share Acount
 - Premium Accounts
+- Config and Start Crawler from Bot
+- Monitor CPU and Ram Usage
 
 ---
 
 ### 7. Team Members
 
 - Neda
-- Melika
-- Sahar
-- Sepehr
-- Hossein
 - Masoud
+- Hossein
+- Sepehr
+- Sahar
+- Melika
