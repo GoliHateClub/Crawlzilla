@@ -8,8 +8,9 @@ import (
 	"Crawlzilla/services/super_admin"
 	"Crawlzilla/services/users"
 	"context"
-	"go.uber.org/zap"
 	"strconv"
+
+	"go.uber.org/zap"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -21,7 +22,7 @@ func CommandStart(ctx context.Context, update tgbotapi.Update) {
 
 	isAdmin := super_admin.IsSuperAdmin(update.Message.From.ID)
 
-	_, err := users.LoginUser(database.DB, strconv.FormatInt(update.SentFrom().ID, 10))
+	_, err := users.LoginUser(database.DB, update.SentFrom().ID)
 
 	if err != nil {
 		botLogger.Error(
