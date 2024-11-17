@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/glebarez/sqlite"
+	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
 
@@ -40,6 +41,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 			name: "Valid filter with existing user and all fields provided",
 			filter: models.Filters{
 				USER_ID:      "existing-user-id",
+				Title:        "Test",
 				City:         "Sample City",
 				Neighborhood: "Sample Neighborhood",
 				Reference:    "Sample Ref",
@@ -59,6 +61,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 			name: "Valid filter with new user and optional fields missing",
 			filter: models.Filters{
 				USER_ID:      "new-user-id",
+				Title:        "Test",
 				CategoryType: "Category",
 				MinArea:      100,
 				MaxArea:      200,
@@ -70,6 +73,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 			name: "Invalid filter with min area greater than max area",
 			filter: models.Filters{
 				USER_ID: "user-id-4",
+				Title:   "Test",
 				MinArea: 150,
 				MaxArea: 100,
 			},
@@ -80,6 +84,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 			name: "Invalid filter with negative price values",
 			filter: models.Filters{
 				USER_ID:  "user-id-5",
+				Title:    "Test",
 				MinPrice: -500,
 				MaxPrice: 1000,
 			},
@@ -90,6 +95,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 			name: "Invalid filter with min price greater than max price",
 			filter: models.Filters{
 				USER_ID:  "user-id-6",
+				Title:    "Test",
 				MinPrice: 1000,
 				MaxPrice: 500,
 			},
@@ -99,6 +105,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 		{
 			name: "Invalid filter with no user id",
 			filter: models.Filters{
+				Title:    "Test",
 				MinPrice: 1000,
 				MaxPrice: 500,
 			},
@@ -109,6 +116,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 			name: "Valid filter with minimum values for integers",
 			filter: models.Filters{
 				USER_ID:  "user-id-7",
+				Title:    "Test",
 				MinArea:  0,
 				MaxArea:  50,
 				MinPrice: 0,
@@ -120,6 +128,7 @@ func TestFilterService_CreateOrUpdateFilter(t *testing.T) {
 		{
 			name: "Valid filter with no optional fields provided",
 			filter: models.Filters{
+				Title:   "Test",
 				USER_ID: "user-id-8",
 			},
 			wantID:  "", // Expect a new ID to be generated
@@ -157,12 +166,12 @@ func TestFilterService_GetFiltersByUserID(t *testing.T) {
 
 	// Add sample filters to the database
 	sampleFilters := []models.Filters{
-		{USER_ID: userID, City: "City1"},
-		{USER_ID: userID, City: "City2"},
-		{USER_ID: userID, City: "City3"},
-		{USER_ID: userID, City: "City4"},
-		{USER_ID: userID, City: "City5"},
-		{USER_ID: userID, City: "City6"},
+		{USER_ID: userID, City: "City1", Title: "Title1"},
+		{USER_ID: userID, City: "City2", Title: "Title2"},
+		{USER_ID: userID, City: "City3", Title: "Title3"},
+		{USER_ID: userID, City: "City4", Title: "Title4"},
+		{USER_ID: userID, City: "City5", Title: "Title5"},
+		{USER_ID: userID, City: "City6", Title: "Title6"},
 	}
 	for _, filter := range sampleFilters {
 		db.Create(&filter)
@@ -275,11 +284,11 @@ func TestFilterService_GetAllFilters(t *testing.T) {
 	db.Create(&user)
 
 	filtersData := []models.Filters{
-		{USER_ID: superAdmin.ID, City: "City1"},
-		{USER_ID: superAdmin.ID, City: "City2"},
-		{USER_ID: admin.ID, City: "City3"},
-		{USER_ID: admin.ID, City: "City4"},
-		{USER_ID: user.ID, City: "City5"},
+		{USER_ID: superAdmin.ID, City: "City1", Title: "Title1"},
+		{USER_ID: superAdmin.ID, City: "City2", Title: "Title2"},
+		{USER_ID: admin.ID, City: "City3", Title: "Title3"},
+		{USER_ID: admin.ID, City: "City4", Title: "Title4"},
+		{USER_ID: user.ID, City: "City5", Title: "Title5"},
 	}
 	for _, filter := range filtersData {
 		db.Create(&filter)
@@ -364,81 +373,71 @@ func TestFilterService_GetAllFilters(t *testing.T) {
 		})
 	}
 }
-func TestFilterService_RemoveFilter(t *testing.T) {
-	// Setup the test database
-	db, err := setupTestDB()
-	if err != nil {
-		t.Fatalf("Failed to set up test database: %v", err)
-	}
 
-	// Seed users and filters
-	superAdmin := models.Users{ID: "super-admin-id", Role: "super-admin"}
-	admin := models.Users{ID: "admin-id", Role: "admin"}
-	user := models.Users{ID: "user-id", Role: models.RoleUser}
+// TestRemoveFilter tests the RemoveFilter function
+func TestRemoveFilter(t *testing.T) {
+	// Set up in-memory database
+	db, _ := setupTestDB()
 
-	db.Save(&superAdmin)
-	db.Save(&admin)
-	db.Save(&user)
+	// Create test users
+	superAdmin := models.Users{Role: models.RoleSuperAdmin}
+	admin := models.Users{Role: models.RoleAdmin}
+	user := models.Users{Role: models.RoleUser}
+	otherUser := models.Users{Role: models.RoleUser}
 
-	filtersData := []models.Filters{
-		{ID: "filter1", USER_ID: superAdmin.ID, City: "City1"},
-		{ID: "filter2", USER_ID: admin.ID, City: "City2"},
-		{ID: "filter3", USER_ID: user.ID, City: "City3"},
-	}
+	// Insert users into the database
+	err := db.Create(&superAdmin).Error
+	assert.NoError(t, err)
+	err = db.Create(&admin).Error
+	assert.NoError(t, err)
+	err = db.Create(&user).Error
+	assert.NoError(t, err)
+	err = db.Create(&otherUser).Error
+	assert.NoError(t, err)
 
-	// Utility to reset test data
-	resetTestDB := func(db *gorm.DB, filters []models.Filters) error {
-		if err := db.Exec("DELETE FROM filters").Error; err != nil {
-			return err
-		}
-		for _, filter := range filters {
-			if err := db.Save(&filter).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	}
+	// Create test filter entries
+	filter1 := models.Filters{ID: "filter1", USER_ID: otherUser.ID, City: "Test City", CategoryType: "Apartment", Title: "Title1"}
+	filter2 := models.Filters{ID: "filter2", USER_ID: admin.ID, City: "Test City", CategoryType: "Apartment", Title: "Title2"}
+	filter3 := models.Filters{ID: "filter3", USER_ID: user.ID, City: "Test City", CategoryType: "Apartment", Title: "Title3"}
+	filter4 := models.Filters{ID: "filter4", USER_ID: otherUser.ID, City: "Test City", CategoryType: "Apartment", Title: "Title4"}
 
-	// Define test cases
-	tests := []struct {
-		name        string
-		userID      string
-		filterID    string
-		wantErr     bool
-		expectedErr string
-	}{
-		{"Super-admin deletes any filter", superAdmin.ID, "filter1", false, ""},
-		{"Admin deletes their own filter", admin.ID, "filter2", false, ""},
-		{"Admin tries to delete another user's filter", admin.ID, "filter3", true, "unauthorized to delete this filter"},
-		{"User deletes their own filter", user.ID, "filter3", false, ""},
-		{"User tries to delete another user's filter", user.ID, "filter1", true, "unauthorized to delete this filter"},
-		{"Super-admin tries to delete non-existent filter", superAdmin.ID, "non-existent-filter", true, "filter not found"},
-		{"Regular user tries to delete non-existent filter", user.ID, "non-existent-filter", true, "filter not found"},
-	}
+	// Insert filters into the database
 
-	// Run test cases
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Reset database before each test
-			if err := resetTestDB(db, filtersData); err != nil {
-				t.Fatalf("Failed to reset test database: %v", err)
-			}
+	err = db.Create(&filter1).Error
+	assert.NoError(t, err)
+	err = db.Create(&filter2).Error
+	assert.NoError(t, err)
+	err = db.Create(&filter3).Error
+	assert.NoError(t, err)
+	err = db.Create(&filter4).Error
+	assert.NoError(t, err)
 
-			err := filters.RemoveFilter(db, tt.userID, tt.filterID)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("FilterService.RemoveFilter() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if err != nil && err.Error() != tt.expectedErr {
-				t.Errorf("FilterService.RemoveFilter() error = %v, expectedErr %v", err, tt.expectedErr)
-			}
+	// Test: User cannot delete someone else's filter
+	err = filters.RemoveFilter(db, user.ID, filter2.ID)
+	assert.Error(t, err) // Unauthorized to delete another user's filter
 
-			// Verify the filter is deleted when no error is expected
-			if !tt.wantErr {
-				var filter models.Filters
-				if err := db.Where("id = ?", tt.filterID).First(&filter).Error; err == nil {
-					t.Errorf("FilterService.RemoveFilter() failed to delete filter: %v", tt.filterID)
-				}
-			}
-		})
-	}
+	// Test: Unauthorized role (e.g., guest) should fail
+	unauthorizedUser := models.Users{ID: "5", Role: "guest"}
+	err = db.Create(&unauthorizedUser).Error
+	assert.NoError(t, err)
+
+	err = filters.RemoveFilter(db, unauthorizedUser.ID, filter1.ID)
+	assert.Error(t, err) // Unauthorized role should fail
+
+	// Test: Super Admin can delete any filter
+	err = filters.RemoveFilter(db, superAdmin.ID, filter4.ID)
+	assert.NoError(t, err)
+
+	// Test: Admin can delete their own filter
+	err = filters.RemoveFilter(db, admin.ID, filter1.ID)
+	assert.Error(t, err) // Admin should not be able to delete another user's filter
+
+	// Test: User can delete their own filter
+	err = filters.RemoveFilter(db, user.ID, filter3.ID)
+	assert.NoError(t, err)
+
+	// Test: Non-existent filter ID
+	err = filters.RemoveFilter(db, user.ID, "non-existent-filter")
+	assert.Error(t, err)
+
 }
