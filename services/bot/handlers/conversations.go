@@ -46,5 +46,7 @@ func HandleConversation(ctx context.Context, update tgbotapi.Update) {
 		conversations.AddAdConversation(ctx, userState, update)
 	case "see_all_ads":
 		conversations.GetAllAdConversation(ctx, userState, update)
+	case "add_filter":
+		conversations.AddFilterConversation(ctx, userState, update)
 	}
 }
