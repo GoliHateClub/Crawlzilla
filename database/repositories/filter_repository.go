@@ -98,7 +98,7 @@ func GetFilterByID(db *gorm.DB, filterID string) (*models.Filters, error) {
 	var filter models.Filters
 	if err := db.Where("id = ?", filterID).First(&filter).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
+			return nil, err
 		}
 		return nil, err
 	}
