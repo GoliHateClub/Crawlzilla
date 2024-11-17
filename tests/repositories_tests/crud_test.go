@@ -22,7 +22,7 @@ func SetupTestDB() *gorm.DB {
 	}
 
 	// Run AutoMigrate to create the Ads table
-	if err := db.AutoMigrate(&models.Ads{}); err != nil {
+	if err := db.AutoMigrate(&models.Ads{}, &models.Users{}, &models.Filters{}); err != nil {
 		panic("failed to migrate database schema")
 	}
 

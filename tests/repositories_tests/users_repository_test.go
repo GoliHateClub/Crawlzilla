@@ -5,19 +5,11 @@ import (
 	"Crawlzilla/models"
 	"testing"
 
-	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
 )
 
-func setupTestDB() *gorm.DB {
-	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	db.AutoMigrate(&models.Users{})
-	return db
-}
-
 func TestCreateUser(t *testing.T) {
-	db := setupTestDB()
+	db := SetupTestDB()
 	defer db.Exec("DROP TABLE users")
 
 	user := models.Users{
@@ -31,7 +23,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestGetUserByID(t *testing.T) {
 	// Setup the test database
-	db := setupTestDB()
+	db := SetupTestDB()
 	defer db.Exec("DROP TABLE users")
 
 	// Insert test user
@@ -52,7 +44,7 @@ func TestGetUserByID(t *testing.T) {
 }
 
 func TestGetAllUsersPaginated(t *testing.T) {
-	db := setupTestDB()
+	db := SetupTestDB()
 	defer db.Exec("DROP TABLE users")
 
 	// Insert test users
