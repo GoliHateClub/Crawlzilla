@@ -3,6 +3,7 @@ package notification
 import (
 	"Crawlzilla/database"
 	"Crawlzilla/services/users"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -13,7 +14,8 @@ import (
 )
 
 // NotifySuperAdmin sends a message to the super admin
-func NotifySuperAdmin(bot *tgbotapi.BotAPI, message string) error {
+func NotifySuperAdmin(ctx context.Context, message string) error {
+	bot := ctx.Value("bot").(*tgbotapi.BotAPI)
 	// Retrieve SUPER_ADMIN_ID from environment variables
 	superAdminIDStr := os.Getenv("SUPER_ADMIN_ID")
 	if superAdminIDStr == "" {
