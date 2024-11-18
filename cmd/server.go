@@ -9,6 +9,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 
 	"Crawlzilla/cmd/bot"
@@ -16,6 +17,7 @@ import (
 	"Crawlzilla/config"
 	"Crawlzilla/database"
 	"Crawlzilla/logger"
+	"Crawlzilla/utils"
 )
 
 func main() {
@@ -38,12 +40,6 @@ func main() {
 	// Create a context that cancels on SIGINT or SIGTERM
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
-	/*
-		!Tip!
-
-		To inject dependencies to services and apps, you can pass dependencies
-		value to global context.
-	*/
 	ctx = context.WithValue(ctx, "configLogger", configLogger)
 
 	defer stop()
@@ -51,16 +47,15 @@ func main() {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	// Start Crawler
-	if config.GetBoolean("IS_CRAWLER_ACTIVE") {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			fmt.Println("Starting Crawler...")
-			crawler.StartDivarCrawler(ctx)
-			fmt.Println("Crawler stopped.")
-		}()
-	}
+	c := cron.New()
+	c.AddFunc("@daily", func() {
+		log.Println("Starting Crawler...")
+		utils.MeasureExecutionStats(func() { crawler.StartDivarCrawler(ctx) })
+		log.Println("Crawler stopped.")
+	})
+
+	c.Start()
+	defer c.Stop()
 
 	// Start Bot
 	if config.GetBoolean("IS_BOT_ACTIVE") {

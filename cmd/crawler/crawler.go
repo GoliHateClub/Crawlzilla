@@ -18,8 +18,6 @@ import (
 // WorkerPool size
 const numWorkers = 1 //TODO: from .env
 
-var adCounter int
-
 // Worker function that processes jobs
 func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync.WaitGroup, cancel context.CancelFunc) {
 	defer wg.Done()
@@ -27,6 +25,8 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync
 	configLogger := ctx.Value("configLogger").(cfg.ConfigLoggerType)
 	crawlerLogger, _ := configLogger("crawler")
 
+	successAdCounter := 0
+	failAdCount := 0
 	for {
 		select {
 		case job, ok := <-jobs:
@@ -35,26 +35,23 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync
 				return
 			}
 
-			crawlerLogger.Info("Scraping Ad Number", zap.Int("adCounter", adCounter))
-			fmt.Println("Scraping Ad Number:", adCounter)
+			crawlerLogger.Info("Scraping Ad Number", zap.Int("successAdCounter", successAdCounter+1))
 			data, err := divar.ScrapPropertyPage("https://divar.ir" + job.URL)
 			if err != nil {
-				log.Println("page passed! property type is not house or vila\n")
 				crawlerLogger.Warn("page passed! property type is not house or vila", zap.String("passedURL", "https://divar.ir"+job.URL))
+				failAdCount++
 				continue
 			}
 			// Save the scrape data to the database
 			if id, err := repositories.CreateAd(database.DB, &data); err != nil {
-				log.Printf("Failed to add scrape result: %v", err)
 				crawlerLogger.Error("Failed to add scrape result:", zap.Error(err))
 			} else {
-				fmt.Println("Added to DB successfully!\n")
-				crawlerLogger.Info("added to db successfully", zap.String("ID", id))
+				crawlerLogger.Info("added to db successfully", zap.String("Ad ID", id))
 			}
 
 			// Increment the counter and check if we reached maxAdCount
-			adCounter++
-			if adCounter >= maxAdCount {
+			successAdCounter++
+			if successAdCounter >= maxAdCount {
 				cancel() // Trigger context cancellation
 				return
 			}
