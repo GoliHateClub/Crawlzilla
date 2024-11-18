@@ -1,7 +1,8 @@
 package handlers
 
 import (
-	"Crawlzilla/services/bot/conversations"
+	"Crawlzilla/services/bot/conversations/ads"
+	"Crawlzilla/services/bot/conversations/filters"
 	"Crawlzilla/services/cache"
 	"context"
 
@@ -15,33 +16,27 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 
 	switch {
 	case len(action) > len("/view_ad:") && action[:len("/view_ad:")] == "/view_ad:":
-		conversations.GetAdDetailsConversation(ctx, update)
+		ads.GetAdDetailsConversation(ctx, update)
 	case action == "/add_admin":
 		bot.Send(tgbotapi.NewMessage(chatID, "Adding admin..."))
 	case action == "/remove_admin":
 		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
 	case action == "/add_ad":
-		conversations.AddAdConversation(ctx, cache.CreateNewUserState("add_ad", update.CallbackQuery), update)
+		ads.AddAdConversation(ctx, cache.CreateNewUserState("add_ad", update.CallbackQuery), update)
 	case action == "/remove_ad":
 		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
 	case action == "/update_ad":
 		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
 	case len(action) >= len("/see_all_ads") && action[:len("/see_all_ads")] == "/see_all_ads":
-		conversations.GetAllAdConversation(ctx, cache.CreateNewUserState("see_all_ads", update.CallbackQuery), update)
-	case "/get_admin":
+		ads.GetAllAdConversation(ctx, cache.CreateNewUserState("see_all_ads", update.CallbackQuery), update)
+	case action == "/get_admin":
 		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
-	case "/get_all_users":
+	case action == "/get_all_users":
 		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
-	case "/filters":
+	case action == "/filters":
 		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
-	case "/add_filter":
-		conversations.AddFilterConversation(ctx, cache.CreateNewUserState("add_filter", update.CallbackQuery), update)
-	case "/remove_ad":
-		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
-	case "/update_ad":
-		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
-	case "/add_ad":
-		conversations.AddAdConversation(ctx, cache.CreateNewUserState("add_ad", update.CallbackQuery), update)
+	case action == "/add_filter":
+		filters.AddFilterConversation(ctx, cache.CreateNewUserState("add_filter", update.CallbackQuery), update)
 	}
 
 	// Acknowledge the callback to prevent the loading indicator
