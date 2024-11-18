@@ -25,7 +25,7 @@ type ActionState struct {
 
 func CreateNewActionState(conversation string, data *tgbotapi.CallbackQuery, name string, action map[string]interface{}) ActionState {
 	return ActionState{
-		UserId:       int64(data.From.ID),
+		UserId:       data.From.ID,
 		ChatId:       data.Message.Chat.ID,
 		Conversation: conversation,
 		Action:       name,
@@ -39,6 +39,14 @@ func CreateActionCache(ctx context.Context) *ActionCache {
 	return &ActionCache{
 		redis: client,
 	}
+}
+
+func (s *ActionState) IsEmpty() bool {
+	return s.ChatId == 0 &&
+		s.UserId == 0 &&
+		s.Conversation == "" &&
+		s.Action == "" &&
+		len(s.ActionData) == 0
 }
 
 func (s *ActionCache) UpdateActionCache(ctx context.Context, chatID int64, updates map[string]interface{}) error {
