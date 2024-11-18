@@ -37,6 +37,9 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
 	case action == "/add_filter":
 		filters.AddFilterConversation(ctx, cache.CreateNewUserState("add_filter", update.CallbackQuery), update)
+	case len(action) >= len("/see_all_filters") && action[:len("/see_all_filters")] == "/see_all_filters":
+		filters.GetAllFilterConversation(ctx, cache.CreateNewUserState("see_all_filters", update.CallbackQuery), update)
+
 	}
 
 	// Acknowledge the callback to prevent the loading indicator

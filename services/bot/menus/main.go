@@ -10,7 +10,7 @@ var MainMenu = [][]MenuItem{
 		{Path: "/get_all_users", IsAdmin: true, Name: "نمایش همه کاربران"},
 	},
 	{
-		{Path: "/filters", IsAdmin: false, Name: "نمایش همه فیلتر ها"},
+		{Path: "/see_all_filters", IsAdmin: false, Name: "نمایش همه فیلتر ها"},
 		{Path: "/add_filter", IsAdmin: false, Name: "اضافه کردن فیلتر"},
 	},
 	{
