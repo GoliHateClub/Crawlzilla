@@ -61,3 +61,8 @@ func isValidTelegramID(telegramID string) bool {
 	var telegramIDRegex = regexp.MustCompile(`^[a-zA-Z0-9_]{5,32}$`)
 	return telegramIDRegex.MatchString(telegramID)
 }
+
+// Helper function to validate Telegram ID (example regex, customize as needed)
+func GetUserIDByTelegramID(db *gorm.DB, telegramID string) (string, error) {
+	return repositories.GetUserID(db, telegramID)
+}
