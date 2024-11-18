@@ -22,8 +22,8 @@ type Users struct {
 	Telegram_ID int64
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
 	Role        Role      `gorm:"type:varchar(15)"`
-
-	Filers []Filters `gorm:"foreignKey:USER_ID"`
+	ChatID      int64
+	Filers      []Filters `gorm:"foreignKey:USER_ID"`
 }
 
 func (c *Users) BeforeCreate(tx *gorm.DB) (err error) {

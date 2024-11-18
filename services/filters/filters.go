@@ -136,6 +136,14 @@ func RemoveFilter(db *gorm.DB, userID, filterID string) error {
 
 	return errors.New("role not authorized to delete filters")
 }
+func GetFilterByID(db *gorm.DB, filterID string) (models.Filters, error) {
+	var filter models.Filters
+	err := db.Where("id = ?", filterID).First(&filter).Error
+	if err != nil {
+		return models.Filters{}, err
+	}
+	return filter, nil
+}
 
 // validateFilterFields validates all fields in the filter
 func validateFilterFields(filter models.Filters) error {

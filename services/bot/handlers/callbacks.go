@@ -37,6 +37,15 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 		bot.Send(tgbotapi.NewMessage(chatID, "Removing admin..."))
 	case action == "/add_filter":
 		filters.AddFilterConversation(ctx, cache.CreateNewUserState("add_filter", update.CallbackQuery), update)
+	case len(action) >= len("/see_all_filters") && action[:len("/see_all_filters")] == "/see_all_filters":
+		filters.GetAllFilterConversation(ctx, cache.CreateNewUserState("see_all_filters", update.CallbackQuery), update)
+	case len(action) > len("/view_filter:") && action[:len("/view_filter:")] == "/view_filter:":
+		filters.ViewFilterDetailsConversation(ctx, cache.CreateNewUserState("view_filter_details", update.CallbackQuery), update)
+	case len(action) > len("/delete_filter:") && action[:len("/delete_filter:")] == "/delete_filter:":
+		filters.DeleteFilterConversation(ctx, update)
+
+	case len(action) > len("/apply_filter:") && action[:len("/apply_filter:")] == "/apply_filter:":
+		filters.ApplyFilterConversation(ctx, cache.CreateNewUserState("apply_filter", update.CallbackQuery), update)
 	}
 
 	// Acknowledge the callback to prevent the loading indicator

@@ -10,11 +10,11 @@ var MainMenu = [][]MenuItem{
 		{Path: "/get_all_users", IsAdmin: true, Name: "نمایش همه کاربران"},
 	},
 	{
-		{Path: "/filters", IsAdmin: false, Name: "نمایش همه فیلتر ها"},
+		{Path: "/see_all_filters", IsAdmin: false, Name: "نمایش همه فیلتر ها"},
 		{Path: "/add_filter", IsAdmin: false, Name: "اضافه کردن فیلتر"},
 	},
 	{
-		{Path: "/see_all_ads", IsAdmin: false, Name: "نمایش آگهی ها"},
+		{Path: "/see_all_ads", IsAdmin: false, Name: "نمایش پربازدیدترین آگهی‌ها"},
 	},
 	{
 		{Path: "/add_ad", IsAdmin: true, Name: "اضافه کردن آگهی"},

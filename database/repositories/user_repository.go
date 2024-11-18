@@ -7,7 +7,7 @@ import (
 )
 
 // CreateUser creates a new user
-func CreateUser(db *gorm.DB, telegramId int64) (models.Users, error) {
+func CreateUser(db *gorm.DB, telegramId int64, chatID int64) (models.Users, error) {
 	var user models.Users
 
 	// Check if the user already exists
@@ -16,6 +16,7 @@ func CreateUser(db *gorm.DB, telegramId int64) (models.Users, error) {
 			// Create a new user if not found
 			user.Role = models.RoleUser // Set the default role
 			user.Telegram_ID = telegramId
+			user.ChatID = chatID
 
 			if err := db.Create(&user).Error; err != nil { // Pass &user instead of user
 				return user, err
@@ -88,4 +89,32 @@ func GetUserID(db *gorm.DB, telegramID string) (string, error) {
 		return "", err
 	}
 	return user.ID, nil
+}
+
+// SetChatID updates the ChatID for a user identified by their Telegram_ID
+func SetChatID(db *gorm.DB, telegramID int64, chatID int64) error {
+	var user models.Users
+
+	// Check if the user exists
+	if err := db.Where("telegram_id = ?", telegramID).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return gorm.ErrRecordNotFound // Return if user is not found
+		}
+		return err // Return any other error
+	}
+
+	// Update the ChatID
+	user.ChatID = chatID
+	if err := db.Save(&user).Error; err != nil {
+		return err // Return error if save operation fails
+	}
+
+	return nil // Success
+}
+func GetUserByTelegramID(db *gorm.DB, telegramID int64) (models.Users, error) {
+	var user models.Users
+	if err := db.Where("telegram_id = ?", telegramID).First(&user).Error; err != nil {
+		return models.Users{}, err
+	}
+	return user, nil
 }
