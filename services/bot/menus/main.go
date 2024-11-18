@@ -14,7 +14,7 @@ var MainMenu = [][]MenuItem{
 		{Path: "/add_filter", IsAdmin: false, Name: "اضافه کردن فیلتر"},
 	},
 	{
-		{Path: "/see_all_ads", IsAdmin: false, Name: "نمایش آگهی ها"},
+		{Path: "/see_all_ads", IsAdmin: false, Name: "نمایش پربازدیدترین آگهی‌ها"},
 	},
 	{
 		{Path: "/add_ad", IsAdmin: true, Name: "اضافه کردن آگهی"},
