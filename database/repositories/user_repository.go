@@ -80,3 +80,12 @@ func GetAllUsersPaginated(db *gorm.DB, page int, pageSize int) ([]models.Users, 
 	err := db.Offset(offset).Limit(pageSize).Find(&users).Error
 	return users, totalRecords, err
 }
+
+// GetUserByID retrieves a user by their Telegram ID
+func GetUserID(db *gorm.DB, telegramID string) (string, error) {
+	var user models.Users
+	if err := db.Where("telegram_id = ?", telegramID).First(&user).Error; err != nil {
+		return "", err
+	}
+	return user.ID, nil
+}
