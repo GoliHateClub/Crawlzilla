@@ -2,7 +2,6 @@ package bot
 
 import (
 	cfg "Crawlzilla/logger"
-	tgBot "Crawlzilla/services/bot"
 	"Crawlzilla/services/bot/handlers"
 	"Crawlzilla/services/cache"
 	"context"
@@ -18,9 +17,6 @@ func StartBot(ctx context.Context) {
 
 	redis := cache.InitRedis(ctx)
 
-	bot := tgBot.Init()
-
-	ctx = context.WithValue(ctx, "bot", bot)
 	ctx = context.WithValue(ctx, "redis", redis)
 
 	handlers.Init(ctx)

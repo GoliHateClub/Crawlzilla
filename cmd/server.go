@@ -9,6 +9,8 @@ import (
 	"sync"
 	"syscall"
 
+	tgBot "Crawlzilla/services/bot"
+
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 
@@ -43,6 +45,10 @@ func main() {
 	ctx = context.WithValue(ctx, "configLogger", configLogger)
 
 	defer stop()
+
+	// Initialize bot and attach it to context
+	botInstance := tgBot.Init()
+	ctx = context.WithValue(ctx, "bot", botInstance)
 
 	var wg sync.WaitGroup
 	defer wg.Wait()
