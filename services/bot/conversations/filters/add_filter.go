@@ -7,10 +7,12 @@ import (
 	"Crawlzilla/services/bot/constants"
 	"Crawlzilla/services/cache"
 	filterService "Crawlzilla/services/filters"
+	"Crawlzilla/services/users"
 	"Crawlzilla/utils"
 	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"go.uber.org/zap"
 	"log"
 	"reflect"
 	"regexp"
@@ -222,9 +224,9 @@ func AddFilterConversation(ctx context.Context, state cache.UserState, update tg
 		bot.Send(tgbotapi.NewMessage(state.ChatId, constants.NewFilterTextDetails))
 
 	case "ask_text_details":
-		input := update.Message.Text
+		input := strings.ReplaceAll(strings.TrimSpace(update.Message.Text), "\n", " \n ")
 
-		// Regex to match حداقل and حداکثر values
+		// ToDo
 		CityRegex := regexp.MustCompile(`(?i)شهر[:：\s]*([\p{L}\s]+)`)
 		NeighborhoodRegex := regexp.MustCompile(`(?i)محله[:：\s]*([\p{L}\s]+)`)
 		CategoryTypeRegex := regexp.MustCompile(`(?i)نوع آگهی[:：\s]*([\p{L}\s]+)`)
@@ -280,6 +282,24 @@ func AddFilterConversation(ctx context.Context, state cache.UserState, update tg
 		if HasBalcony != nil {
 			filters.HasBalcony = HasBalcony[1] == "بله"
 		}
+
+		userId, err := users.GetUserIDByTelegramID(database.DB, strconv.FormatInt(state.UserId, 10))
+
+		if err != nil {
+			botLogger.Error(
+				"Error while reading user id",
+				zap.Error(err),
+				zap.String("user_id", strconv.FormatInt(state.UserId, 10)),
+			)
+
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد!"))
+			return
+		}
+
+		filters.USER_ID = userId
+		//println(userId)
+		println("cat", filters.CategoryType)
+		//fmt.Printf("%v\n", filters)
 
 		_, err = filterService.CreateOrUpdateFilter(database.DB, filters)
 
