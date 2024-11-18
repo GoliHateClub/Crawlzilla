@@ -1,10 +1,12 @@
 package filters
 
 import (
+	"Crawlzilla/database"
 	cfg "Crawlzilla/logger"
 	"Crawlzilla/models"
 	"Crawlzilla/services/bot/constants"
 	"Crawlzilla/services/cache"
+	filterService "Crawlzilla/services/filters"
 	"Crawlzilla/utils"
 	"context"
 	"fmt"
@@ -128,6 +130,12 @@ func AddFilterConversation(ctx context.Context, state cache.UserState, update tg
 
 		nextQuestionKey := getNextQuestionKey(filterState)
 
+		if err != nil {
+			cache.HandleActionStateError(botLogger, state, err)
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد!"))
+			return
+		}
+
 		// Normalize Persian numbers to English
 		input := strings.NewReplacer(
 			"۰", "0", "۱", "1", "۲", "2", "۳", "3",
@@ -184,7 +192,7 @@ func AddFilterConversation(ctx context.Context, state cache.UserState, update tg
 		})
 
 		if err != nil {
-			cache.HandleUserStateError(botLogger, state, err)
+			cache.HandleActionStateError(botLogger, state, err)
 			msg := tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد")
 			bot.Send(msg)
 			return
@@ -196,9 +204,113 @@ func AddFilterConversation(ctx context.Context, state cache.UserState, update tg
 			return
 		}
 
-		bot.Send(tgbotapi.NewMessage(state.ChatId, "سوالات تمام شد. لطفا اطلاعات خود را ذخیره کنید.")) // ToDO
+		err = userStates.SetUserCache(ctx, state.ChatId, cache.UserState{
+			ChatId:       state.ChatId,
+			UserId:       state.UserId,
+			Stage:        "ask_text_details",
+			Conversation: state.Conversation,
+		})
 
-	case "get_ranges_ask_text_details":
+		if err != nil {
+			cache.HandleUserStateError(botLogger, state, err)
+			log.Printf("Error updating user state: %v", err)
+			return
+		}
 
+		bot.Send(tgbotapi.NewMessage(state.ChatId, "مرسی ازت. حالا میخوام که یکم جزئیات متنی بهم بدی."))
+		bot.Send(tgbotapi.NewMessage(state.ChatId, "عین همون قالبی که بالا دیدی، برای فرم زیر رو بفرست."))
+		bot.Send(tgbotapi.NewMessage(state.ChatId, constants.NewFilterTextDetails))
+
+	case "ask_text_details":
+		input := update.Message.Text
+
+		// Regex to match حداقل and حداکثر values
+		CityRegex := regexp.MustCompile(`(?i)شهر[:：\s]*([\p{L}\s]+)`)
+		NeighborhoodRegex := regexp.MustCompile(`(?i)محله[:：\s]*([\p{L}\s]+)`)
+		CategoryTypeRegex := regexp.MustCompile(`(?i)نوع آگهی[:：\s]*([\p{L}\s]+)`)
+		PropertyTypeRegex := regexp.MustCompile(`(?i)نوع ملک[:：\s]*([\p{L}\s]+)`)
+		HasElevatorRegex := regexp.MustCompile(`(?i)آسانسور داشته باشید؟[:：\s]*(بله|خیر)`)
+		HasStorageRegex := regexp.MustCompile(`(?i)انباری داشته باشید؟[:：\s]*(بله|خیر)`)
+		HasParkingRegex := regexp.MustCompile(`(?i)پارکینگ داشته باشید؟[:：\s]*(بله|خیر)`)
+		HasBalconyRegex := regexp.MustCompile(`(?i)بالکن داشته باشید؟[:：\s]*(بله|خیر)`)
+
+		City := CityRegex.FindStringSubmatch(input)
+		Neighborhood := NeighborhoodRegex.FindStringSubmatch(input)
+		CategoryType := CategoryTypeRegex.FindStringSubmatch(input)
+		PropertyType := PropertyTypeRegex.FindStringSubmatch(input)
+		HasElevator := HasElevatorRegex.FindStringSubmatch(input)
+		HasStorage := HasStorageRegex.FindStringSubmatch(input)
+		HasParking := HasParkingRegex.FindStringSubmatch(input)
+		HasBalcony := HasBalconyRegex.FindStringSubmatch(input)
+
+		filterData, err := actionStates.GetActionState(ctx, state.ChatId)
+		filterMap, _ := filterData.ActionData["new_filter"]
+
+		if err != nil {
+			cache.HandleActionStateError(botLogger, state, err)
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد!"))
+			return
+		}
+
+		var filters models.Filters
+
+		err = utils.MapToStruct(filterMap, &filters)
+
+		if City != nil {
+			filters.City = City[1]
+		}
+		if Neighborhood != nil {
+			filters.Neighborhood = Neighborhood[1]
+		}
+		if CategoryType != nil {
+			filters.CategoryType = CategoryType[1]
+		}
+		if PropertyType != nil {
+			filters.PropertyType = PropertyType[1]
+		}
+		if HasElevator != nil {
+			filters.HasElevator = HasElevator[1] == "بله"
+		}
+		if HasStorage != nil {
+			filters.HasStorage = HasStorage[1] == "بله"
+		}
+		if HasParking != nil {
+			filters.HasParking = HasParking[1] == "بله"
+		}
+		if HasBalcony != nil {
+			filters.HasBalcony = HasBalcony[1] == "بله"
+		}
+
+		_, err = filterService.CreateOrUpdateFilter(database.DB, filters)
+
+		if err != nil {
+			println(err)
+			msg := tgbotapi.NewMessage(state.ChatId, "خطایی هنگام ذخیره سازی اطلاعات رخ داد! لطفا دوباره تلاش کنید.")
+			bot.Send(msg)
+			msg = tgbotapi.NewMessage(state.ChatId, err.Error())
+			bot.Send(msg)
+			return
+		}
+
+		err = userStates.ClearUserCache(ctx, state.ChatId)
+
+		if err != nil {
+			cache.HandleUserStateError(botLogger, state, err)
+			msg := tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد")
+			bot.Send(msg)
+			return
+		}
+
+		err = actionStates.ClearActionState(ctx, state.ChatId)
+
+		if err != nil {
+			cache.HandleActionStateError(botLogger, state, err)
+			msg := tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد")
+			bot.Send(msg)
+			return
+		}
+
+		msg := tgbotapi.NewMessage(state.ChatId, "فیلتر جدید با موفقیت ذخیره شد!")
+		bot.Send(msg)
 	}
 }
