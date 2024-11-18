@@ -8,53 +8,15 @@ import (
 	"Crawlzilla/services/cache"
 	filterService "Crawlzilla/services/filters"
 	"Crawlzilla/services/users"
-	"Crawlzilla/utils"
 	"context"
-	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"go.uber.org/zap"
 	"log"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"go.uber.org/zap"
 )
-
-var questions = map[string]struct {
-	Name        string
-	Description string
-}{
-	"Area": {
-		Name:        "متراژ",
-		Description: "متراژ خونه چقدر باشه؟",
-	},
-	"Price": {
-		Name:        "قیمت",
-		Description: "قیمت خونه چقدر باشه؟",
-	},
-	"Rent": {
-		Name:        "اجاره",
-		Description: "اجاره خونه چقدر باشه؟",
-	},
-	"Room": {
-		Name:        "تعداد اتاق",
-		Description: "تعداد اتاق خونه چقدر باشه؟",
-	},
-	"FloorNumber": {
-		Name:        "تعداد طبقه",
-		Description: "خونه تو کدوم طبقه باشه؟",
-	},
-}
-
-func getNextQuestionKey(currentKey string) string {
-	keys := []string{"Area", "Price", "Rent", "Room", "FloorNumber"}
-	for i, key := range keys {
-		if key == currentKey && i+1 < len(keys) {
-			return keys[i+1]
-		}
-	}
-	return ""
-}
 
 func AddFilterConversation(ctx context.Context, state cache.UserState, update tgbotapi.Update) {
 	bot := ctx.Value("bot").(*tgbotapi.BotAPI)
@@ -65,9 +27,11 @@ func AddFilterConversation(ctx context.Context, state cache.UserState, update tg
 
 	switch state.Stage {
 	case "init":
+		// Inform the user to provide a filter title
 		msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "نام فیلتر جدیدت رو بنویس")
 		bot.Send(msg)
 
+		// Update the user state to move to the next stage
 		err := userStates.SetUserCache(ctx, state.ChatId, cache.UserState{
 			ChatId:       state.ChatId,
 			UserId:       state.UserId,
@@ -82,155 +46,67 @@ func AddFilterConversation(ctx context.Context, state cache.UserState, update tg
 		}
 
 	case "get_title_ask_ranges":
-		userAction, err := actionStates.GetActionState(ctx, state.ChatId)
-
-		if err != nil {
-			cache.HandleActionStateError(botLogger, state, err)
-			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد!"))
+		// Step 1: Receive only the title
+		title := strings.TrimSpace(update.Message.Text)
+		if title == "" {
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "عنوان نمی‌تواند خالی باشد! لطفاً یک عنوان معتبر وارد کنید."))
 			return
 		}
 
-		if userAction.IsEmpty() {
-			title := strings.Trim(update.Message.Text, " ")
-
-			newFilter := models.Filters{
-				Title: title,
-			}
-
-			err = actionStates.SetUserState(ctx, state.ChatId, cache.ActionState{
-				ChatId:       state.ChatId,
-				UserId:       state.UserId,
-				Conversation: state.Conversation,
-				Action:       "add_filter",
-				ActionData: map[string]interface{}{
-					"current_q":  "Area",
-					"new_filter": newFilter,
-				},
-			})
-
-			if err != nil {
-				cache.HandleActionStateError(botLogger, state, err)
-				bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد!"))
-				return
-			}
-
-			bot.Send(tgbotapi.NewMessage(state.ChatId, "حالا باید مقادیر عددی مثل قیمت، اجاره تعداد اتاق و... رو بفرستی."))
-			bot.Send(tgbotapi.NewMessage(state.ChatId, "مقادیری که میفرستی باید در قالب زیر باشه:"))
-			bot.Send(tgbotapi.NewMessage(state.ChatId, constants.NewFilterRange))
-			bot.Send(tgbotapi.NewMessage(state.ChatId, constants.NewFilterRangeRules))
-			bot.Send(tgbotapi.NewMessage(state.ChatId, questions["Area"].Description))
-			return
-		}
-
-		filterData, err := actionStates.GetActionState(ctx, state.ChatId)
-		filterMap, _ := filterData.ActionData["new_filter"]
-		filterState, _ := filterData.ActionData["current_q"].(string)
-
-		var filters models.Filters
-
-		err = utils.MapToStruct(filterMap, &filters)
-
-		nextQuestionKey := getNextQuestionKey(filterState)
-
-		if err != nil {
-			cache.HandleActionStateError(botLogger, state, err)
-			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد!"))
-			return
-		}
-
-		// Normalize Persian numbers to English
-		input := strings.NewReplacer(
-			"۰", "0", "۱", "1", "۲", "2", "۳", "3",
-			"۴", "4", "۵", "5", "۶", "6", "۷", "7",
-			"۸", "8", "۹", "9",
-		).Replace(update.Message.Text)
-
-		// Regex to match حداقل and حداکثر values
-		minRegex := regexp.MustCompile(`(?i)حداقل[:：\s]*([\d]+)`)
-		maxRegex := regexp.MustCompile(`(?i)حداکثر[:：\s]*([\d]+)`)
-
-		// Find matches
-		minMatch := minRegex.FindStringSubmatch(input)
-		maxMatch := maxRegex.FindStringSubmatch(input)
-
-		var minValue int
-		var maxValue int
-
-		// Parse matches to integers
-		if len(minMatch) > 1 {
-			minValue, err = strconv.Atoi(minMatch[1])
-			if err != nil {
-				cache.HandleActionStateError(botLogger, state, err)
-				msg := tgbotapi.NewMessage(state.ChatId, fmt.Sprintf("ساختار مقادیر %s شما با ساختار تعریف شده مطابقت ندارد!", questions[filterState].Name))
-				bot.Send(msg)
-				return
-			}
-		}
-
-		if len(maxMatch) > 1 {
-			maxValue, err = strconv.Atoi(maxMatch[1])
-			if err != nil {
-				cache.HandleActionStateError(botLogger, state, err)
-				msg := tgbotapi.NewMessage(state.ChatId, fmt.Sprintf("ساختار مقادیر %s شما با ساختار تعریف شده مطابقت ندارد!", questions[filterState].Name))
-				bot.Send(msg)
-				return
-			}
-		}
-
-		if minValue != 0 {
-			fieldName := "Min" + filterState
-			reflect.ValueOf(&filters).Elem().FieldByName(fieldName).SetInt(int64(minValue))
-		}
-		if maxValue != 0 {
-			fieldName := "Max" + filterState
-			reflect.ValueOf(&filters).Elem().FieldByName(fieldName).SetInt(int64(maxValue))
-		}
-
-		err = actionStates.UpdateActionCache(ctx, state.ChatId, map[string]interface{}{
-			"ActionData": map[string]interface{}{
-				"new_filter": filters,
-				"current_q":  nextQuestionKey,
+		// Step 2: Fix user state and action state
+		err := actionStates.SetUserState(ctx, state.ChatId, cache.ActionState{
+			ChatId:       state.ChatId,
+			UserId:       state.UserId,
+			Conversation: "add_filter", // Conversation name
+			Action:       "add_filter",
+			ActionData: map[string]interface{}{
+				"title": title, // Save the title in action state
 			},
 		})
-
 		if err != nil {
 			cache.HandleActionStateError(botLogger, state, err)
-			msg := tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد")
-			bot.Send(msg)
-			return
-		}
-
-		if nextQuestionKey != "" {
-			nextQuestion := questions[nextQuestionKey]
-			bot.Send(tgbotapi.NewMessage(state.ChatId, nextQuestion.Description))
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد! لطفاً دوباره تلاش کنید."))
 			return
 		}
 
 		err = userStates.SetUserCache(ctx, state.ChatId, cache.UserState{
 			ChatId:       state.ChatId,
 			UserId:       state.UserId,
-			Stage:        "ask_text_details",
+			Stage:        "ask_text_details", // Move to the next stage
 			Conversation: state.Conversation,
 		})
-
 		if err != nil {
 			cache.HandleUserStateError(botLogger, state, err)
-			log.Printf("Error updating user state: %v", err)
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد! لطفاً دوباره تلاش کنید."))
 			return
 		}
 
-		bot.Send(tgbotapi.NewMessage(state.ChatId, "مرسی ازت. حالا میخوام که یکم جزئیات متنی بهم بدی."))
-		bot.Send(tgbotapi.NewMessage(state.ChatId, "عین همون قالبی که بالا دیدی، برای فرم زیر رو بفرست."))
+		// Step 3: Inform the user
+		bot.Send(tgbotapi.NewMessage(state.ChatId, "مرسی ازت! حالا می‌خوام که یکم جزئیات متنی بهم بدی."))
+		bot.Send(tgbotapi.NewMessage(state.ChatId, "عین همون قالبی که بالا دیدی، برای فرم زیر رو بفرست:"))
 		bot.Send(tgbotapi.NewMessage(state.ChatId, constants.NewFilterTextDetails))
 
 	case "ask_text_details":
-		input := strings.ReplaceAll(strings.TrimSpace(update.Message.Text), "\n", " \n ")
+		// Retrieve title from action state
+		actionState, err := actionStates.GetActionState(ctx, state.ChatId)
+		if err != nil {
+			cache.HandleActionStateError(botLogger, state, err)
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد! لطفاً دوباره تلاش کنید."))
+			return
+		}
 
-		// ToDo
-		CityRegex := regexp.MustCompile(`(?i)شهر[:：\s]*([\p{L}\s]+)`)
-		NeighborhoodRegex := regexp.MustCompile(`(?i)محله[:：\s]*([\p{L}\s]+)`)
-		CategoryTypeRegex := regexp.MustCompile(`(?i)نوع آگهی[:：\s]*([\p{L}\s]+)`)
-		PropertyTypeRegex := regexp.MustCompile(`(?i)نوع ملک[:：\s]*([\p{L}\s]+)`)
+		title, ok := actionState.ActionData["title"].(string)
+		if !ok || title == "" {
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد! عنوان یافت نشد. لطفاً دوباره تلاش کنید."))
+			return
+		}
+
+		// Parse user input for text details
+		input := strings.TrimSpace(update.Message.Text)
+		CityRegex := regexp.MustCompile(`(?i)شهر[:：\s]*(.+)`)
+		NeighborhoodRegex := regexp.MustCompile(`(?i)محله[:：\s]*(.+)`)
+		CategoryTypeRegex := regexp.MustCompile(`(?i)نوع آگهی[:：\s]*(.+)`)
+		PropertyTypeRegex := regexp.MustCompile(`(?i)نوع ملک[:：\s]*(.+)`)
 		HasElevatorRegex := regexp.MustCompile(`(?i)آسانسور داشته باشید؟[:：\s]*(بله|خیر)`)
 		HasStorageRegex := regexp.MustCompile(`(?i)انباری داشته باشید؟[:：\s]*(بله|خیر)`)
 		HasParkingRegex := regexp.MustCompile(`(?i)پارکینگ داشته باشید؟[:：\s]*(بله|خیر)`)
@@ -245,92 +121,67 @@ func AddFilterConversation(ctx context.Context, state cache.UserState, update tg
 		HasParking := HasParkingRegex.FindStringSubmatch(input)
 		HasBalcony := HasBalconyRegex.FindStringSubmatch(input)
 
-		filterData, err := actionStates.GetActionState(ctx, state.ChatId)
-		filterMap, _ := filterData.ActionData["new_filter"]
-
-		if err != nil {
-			cache.HandleActionStateError(botLogger, state, err)
-			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد!"))
-			return
-		}
-
-		var filters models.Filters
-
-		err = utils.MapToStruct(filterMap, &filters)
+		// Create a filter structure
+		var filter models.Filters
+		filter.Title = title // Use the title from the previous step
 
 		if City != nil {
-			filters.City = City[1]
+			filter.City = City[1]
 		}
 		if Neighborhood != nil {
-			filters.Neighborhood = Neighborhood[1]
+			filter.Neighborhood = Neighborhood[1]
 		}
 		if CategoryType != nil {
-			filters.CategoryType = CategoryType[1]
+			filter.CategoryType = CategoryType[1]
 		}
 		if PropertyType != nil {
-			filters.PropertyType = PropertyType[1]
+			filter.PropertyType = PropertyType[1]
 		}
 		if HasElevator != nil {
-			filters.HasElevator = HasElevator[1] == "بله"
+			filter.HasElevator = HasElevator[1] == "بله"
 		}
 		if HasStorage != nil {
-			filters.HasStorage = HasStorage[1] == "بله"
+			filter.HasStorage = HasStorage[1] == "بله"
 		}
 		if HasParking != nil {
-			filters.HasParking = HasParking[1] == "بله"
+			filter.HasParking = HasParking[1] == "بله"
 		}
 		if HasBalcony != nil {
-			filters.HasBalcony = HasBalcony[1] == "بله"
+			filter.HasBalcony = HasBalcony[1] == "بله"
 		}
 
+		// Set the user ID
 		userId, err := users.GetUserIDByTelegramID(database.DB, strconv.FormatInt(state.UserId, 10))
-
 		if err != nil {
 			botLogger.Error(
 				"Error while reading user id",
 				zap.Error(err),
 				zap.String("user_id", strconv.FormatInt(state.UserId, 10)),
 			)
-
-			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد!"))
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد! لطفاً دوباره تلاش کنید."))
 			return
 		}
+		filter.USER_ID = userId
 
-		filters.USER_ID = userId
-		//println(userId)
-		println("cat", filters.CategoryType)
-		//fmt.Printf("%v\n", filters)
-
-		_, err = filterService.CreateOrUpdateFilter(database.DB, filters)
-
+		// Save the filter
+		_, err = filterService.CreateOrUpdateFilter(database.DB, filter)
 		if err != nil {
-			println(err)
-			msg := tgbotapi.NewMessage(state.ChatId, "خطایی هنگام ذخیره سازی اطلاعات رخ داد! لطفا دوباره تلاش کنید.")
-			bot.Send(msg)
-			msg = tgbotapi.NewMessage(state.ChatId, err.Error())
-			bot.Send(msg)
+			bot.Send(tgbotapi.NewMessage(state.ChatId, "خطایی هنگام ذخیره سازی اطلاعات رخ داد! لطفاً دوباره تلاش کنید."))
 			return
 		}
 
+		// Clear states and inform the user
 		err = userStates.ClearUserCache(ctx, state.ChatId)
-
 		if err != nil {
 			cache.HandleUserStateError(botLogger, state, err)
-			msg := tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد")
-			bot.Send(msg)
 			return
 		}
-
 		err = actionStates.ClearActionState(ctx, state.ChatId)
-
 		if err != nil {
 			cache.HandleActionStateError(botLogger, state, err)
-			msg := tgbotapi.NewMessage(state.ChatId, "خطایی رخ داد")
-			bot.Send(msg)
 			return
 		}
 
-		msg := tgbotapi.NewMessage(state.ChatId, "فیلتر جدید با موفقیت ذخیره شد!")
-		bot.Send(msg)
+		bot.Send(tgbotapi.NewMessage(state.ChatId, "فیلتر جدید با موفقیت ذخیره شد!"))
 	}
 }
