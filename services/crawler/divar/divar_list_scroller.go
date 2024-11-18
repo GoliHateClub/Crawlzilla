@@ -49,7 +49,7 @@ func CrawlDivarAds(ctx context.Context, url string, jobs chan<- Job) {
 		if err := chromedp.Run(ctx, chromedp.Navigate(url)); err != nil {
 			log.Println("Navigation error:", err)
 		}
-
+		chromedp.Run(ctx, chromedp.Sleep(2*time.Second))
 		for {
 			select {
 			case <-ctx.Done():
