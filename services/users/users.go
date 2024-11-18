@@ -16,8 +16,8 @@ type PaginatedUsers struct {
 }
 
 // GetAllUsersPaginatedService retrieves all users with pagination and structures the output
-func LoginUser(db *gorm.DB, telegramId int64) (models.Users, error) {
-	return repositories.CreateUser(db, telegramId)
+func LoginUser(db *gorm.DB, telegramId int64, chatID int64) (models.Users, error) {
+	return repositories.CreateUser(db, telegramId, chatID)
 }
 
 // GetAllUsersPaginatedService retrieves all users with pagination and structures the output
@@ -65,4 +65,35 @@ func isValidTelegramID(telegramID string) bool {
 // Helper function to validate Telegram ID (example regex, customize as needed)
 func GetUserIDByTelegramID(db *gorm.DB, telegramID string) (string, error) {
 	return repositories.GetUserID(db, telegramID)
+}
+
+// UpdateChatID updates the ChatID for a user identified by their Telegram_ID
+
+func UpdateChatID(db *gorm.DB, telegramID int64, chatID int64) error {
+	// Validate Telegram ID and Chat ID
+	if telegramID == 0 || chatID == 0 {
+		return errors.New("telegramID and chatID must be provided")
+	}
+
+	// Call repository function to update the ChatID
+	err := repositories.SetChatID(db, telegramID, chatID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return err // Return any other error
+	}
+
+	return nil // Success
+}
+func GetUserByTelegramIDService(db *gorm.DB, telegramID int64) (models.Users, error) {
+	// Call repository function to fetch the user by Telegram ID
+	user, err := repositories.GetUserByTelegramID(db, telegramID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return models.Users{}, errors.New("user not found")
+		}
+		return models.Users{}, err
+	}
+	return user, nil
 }

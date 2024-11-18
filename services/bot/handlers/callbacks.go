@@ -45,9 +45,7 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 		filters.DeleteFilterConversation(ctx, update)
 
 	case len(action) > len("/apply_filter:") && action[:len("/apply_filter:")] == "/apply_filter:":
-		// Placeholder for apply filter flow
-		bot.Send(tgbotapi.NewMessage(chatID, "Applying filter..."))
-
+		filters.ApplyFilterConversation(ctx, cache.CreateNewUserState("apply_filter", update.CallbackQuery), update)
 	}
 
 	// Acknowledge the callback to prevent the loading indicator

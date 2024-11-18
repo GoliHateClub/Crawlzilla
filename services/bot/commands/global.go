@@ -22,7 +22,17 @@ func CommandStart(ctx context.Context, update tgbotapi.Update) {
 
 	isAdmin := super_admin.IsSuperAdmin(update.Message.From.ID)
 
-	_, err := users.LoginUser(database.DB, update.SentFrom().ID)
+	if isAdmin {
+		err := users.UpdateChatID(database.DB, update.SentFrom().ID, update.Message.Chat.ID)
+		if err != nil {
+			botLogger.Error(
+				"Error while updating chatID for User",
+				zap.Error(err),
+				zap.String("user_id", strconv.FormatInt(update.SentFrom().ID, 10)),
+			)
+		}
+	}
+	_, err := users.LoginUser(database.DB, update.SentFrom().ID, update.Message.Chat.ID)
 
 	if err != nil {
 		botLogger.Error(
