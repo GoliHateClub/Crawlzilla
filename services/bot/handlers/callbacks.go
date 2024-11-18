@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"Crawlzilla/services/bot/conversations/ads"
+	"Crawlzilla/services/bot/conversations/configs"
 	"Crawlzilla/services/bot/conversations/filters"
 	"Crawlzilla/services/cache"
 	"context"
@@ -43,9 +44,11 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 		filters.ViewFilterDetailsConversation(ctx, cache.CreateNewUserState("view_filter_details", update.CallbackQuery), update)
 	case len(action) > len("/delete_filter:") && action[:len("/delete_filter:")] == "/delete_filter:":
 		filters.DeleteFilterConversation(ctx, update)
-
 	case len(action) > len("/apply_filter:") && action[:len("/apply_filter:")] == "/apply_filter:":
 		filters.ApplyFilterConversation(ctx, cache.CreateNewUserState("apply_filter", update.CallbackQuery), update)
+	case action == "/config":
+		configs.ConfigCrawlerConversation(ctx, cache.CreateNewUserState("config_crawler", update.CallbackQuery), update)
+
 	}
 
 	// Acknowledge the callback to prevent the loading indicator

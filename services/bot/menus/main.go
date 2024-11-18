@@ -2,6 +2,9 @@ package menus
 
 var MainMenu = [][]MenuItem{
 	{
+		{Path: "/config", IsAdmin: true, Name: "پیکربندی کرالر"},
+	},
+	{
 		{Path: "/add_admin", IsAdmin: true, Name: "اضافه کردن ادمین"},
 		{Path: "/remove_admin", IsAdmin: true, Name: "حذف کردن ادمین"},
 	},

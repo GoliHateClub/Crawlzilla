@@ -3,6 +3,7 @@ package handlers
 import (
 	cfg "Crawlzilla/logger"
 	"Crawlzilla/services/bot/conversations/ads"
+	"Crawlzilla/services/bot/conversations/configs"
 	"Crawlzilla/services/bot/conversations/filters"
 	"Crawlzilla/services/bot/keyboards"
 	"Crawlzilla/services/bot/menus"
@@ -53,5 +54,7 @@ func HandleConversation(ctx context.Context, update tgbotapi.Update) {
 		filters.GetAllFilterConversation(ctx, userState, update)
 	case "view_filter_details":
 		filters.ViewFilterDetailsConversation(ctx, userState, update)
+	case "config_crawler":
+		configs.ConfigCrawlerConversation(ctx, userState, update)
 	}
 }
