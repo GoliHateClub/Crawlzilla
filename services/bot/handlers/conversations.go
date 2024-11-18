@@ -51,5 +51,7 @@ func HandleConversation(ctx context.Context, update tgbotapi.Update) {
 		filters.AddFilterConversation(ctx, userState, update)
 	case "see_all_filters":
 		filters.GetAllFilterConversation(ctx, userState, update)
+	case "view_filter_details":
+		filters.ViewFilterDetailsConversation(ctx, userState, update)
 	}
 }

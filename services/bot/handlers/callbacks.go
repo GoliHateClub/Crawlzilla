@@ -39,6 +39,14 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 		filters.AddFilterConversation(ctx, cache.CreateNewUserState("add_filter", update.CallbackQuery), update)
 	case len(action) >= len("/see_all_filters") && action[:len("/see_all_filters")] == "/see_all_filters":
 		filters.GetAllFilterConversation(ctx, cache.CreateNewUserState("see_all_filters", update.CallbackQuery), update)
+	case len(action) > len("/view_filter:") && action[:len("/view_filter:")] == "/view_filter:":
+		filters.ViewFilterDetailsConversation(ctx, cache.CreateNewUserState("view_filter_details", update.CallbackQuery), update)
+	case len(action) > len("/delete_filter:") && action[:len("/delete_filter:")] == "/delete_filter:":
+		filters.DeleteFilterConversation(ctx, update)
+
+	case len(action) > len("/apply_filter:") && action[:len("/apply_filter:")] == "/apply_filter:":
+		// Placeholder for apply filter flow
+		bot.Send(tgbotapi.NewMessage(chatID, "Applying filter..."))
 
 	}
 

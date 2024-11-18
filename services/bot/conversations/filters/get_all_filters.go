@@ -88,7 +88,7 @@ func GetAllFilterConversation(ctx context.Context, state cache.UserState, update
 
 		// Add an inline button for filter actions (e.g., View, Edit, Delete)
 		buttons = append(buttons, tgbotapi.NewInlineKeyboardRow(
-			// tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("🔍 مشاهده: %s", filter.Title), fmt.Sprintf("/view_filter:%s", filter.ID)),
+			tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("🔍 مشاهده: %s", filter.Title), fmt.Sprintf("/view_filter:%s", filter.ID)),
 			tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("🗑️ حذف %s", filter.Title), fmt.Sprintf("/delete_filter:%s", filter.ID)),
 		))
 	}
