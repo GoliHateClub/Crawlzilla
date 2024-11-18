@@ -3,6 +3,7 @@ package filters
 import (
 	"Crawlzilla/database"
 	cfg "Crawlzilla/logger"
+	"Crawlzilla/models"
 	"Crawlzilla/services/cache"
 	filterService "Crawlzilla/services/filters"
 	"Crawlzilla/services/users"
@@ -34,6 +35,18 @@ func GetAllFilterConversation(ctx context.Context, state cache.UserState, update
 		return
 	}
 
+	// Retrieve user role
+	user, err := users.GetUserByIDService(database.DB, userID)
+	if err != nil {
+		bot.Send(tgbotapi.NewMessage(state.ChatId, "خطا در دریافت اطلاعات کاربر!"))
+		botLogger.Error(
+			"Error retrieving user role",
+			zap.Error(err),
+			zap.String("user_id", userID),
+		)
+		return
+	}
+
 	// Extract page number from callback data (if provided)
 	page := 1 // Default page
 	if update.CallbackQuery != nil && update.CallbackQuery.Data != "" {
@@ -49,8 +62,16 @@ func GetAllFilterConversation(ctx context.Context, state cache.UserState, update
 	// Define page size
 	pageSize := 2
 
-	// Fetch filters using the service layer
-	filterData, err := filterService.GetAllFilters(database.DB, userID, page, pageSize)
+	// Fetch filters based on user role
+	var filterData filterService.PaginatedFilters
+	if user.Role == models.RoleUser {
+		// Call GetFiltersByUserID for normal users
+		filterData, err = filterService.GetFiltersByUserID(database.DB, userID, page, pageSize)
+	} else {
+		// Call GetAllFilters for admins and super admins
+		filterData, err = filterService.GetAllFilters(database.DB, userID, page, pageSize)
+	}
+
 	if err != nil {
 		bot.Send(tgbotapi.NewMessage(state.ChatId, "خطا در دریافت فیلترها"))
 		botLogger.Error("Error fetching filters", zap.Error(err))
