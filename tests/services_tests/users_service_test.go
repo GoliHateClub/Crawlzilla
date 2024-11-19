@@ -4,7 +4,6 @@ import (
 	"Crawlzilla/database/repositories"
 	"Crawlzilla/models"
 	"Crawlzilla/services/users"
-	"log"
 	"testing"
 
 	"github.com/glebarez/sqlite"
@@ -24,8 +23,9 @@ func TestGetAllUsersPaginatedService(t *testing.T) {
 
 	// Insert test users
 	for i := 0; i < 25; i++ {
-		user := models.Users{Telegram_ID: int64(i)}
-		repositories.CreateUser(db, user.Telegram_ID)
+		telegramID := int64(i)
+		chatID := int64(1000 + i) // Generate a unique chatID for each user
+		repositories.CreateUser(db, telegramID, chatID)
 	}
 
 	// Test with page 1, page size 10
@@ -50,23 +50,23 @@ func TestGetUserByIDService(t *testing.T) {
 	// Insert a test user
 	user := models.Users{
 		Telegram_ID: int64(12345),
-		Role:        "super-admin",
+		ChatID:      int64(67890),
 	}
-	user, err := repositories.CreateUser(db, user.Telegram_ID)
-	if err != nil {
-		log.Println("ERROR ", err)
-	}
+	createdUser, err := repositories.CreateUser(db, user.Telegram_ID, user.ChatID)
+	assert.NoError(t, err, "Creating user should not return an error")
 
 	// Test retrieving the user by ID
-	retrievedUser, err := users.GetUserByIDService(db, user.ID)
+	retrievedUser, err := users.GetUserByIDService(db, createdUser.ID)
 	assert.NoError(t, err, "Retrieving a valid user should not return an error")
 	assert.NotNil(t, retrievedUser, "Retrieved user should not be nil")
-	assert.Equal(t, user.ID, retrievedUser.ID, "The retrieved user ID should match the created user ID")
-	assert.Equal(t, user.Role, retrievedUser.Role, "The retrieved user role should match the created user role")
+	assert.Equal(t, createdUser.ID, retrievedUser.ID, "The retrieved user ID should match the created user ID")
+	assert.Equal(t, createdUser.Role, retrievedUser.Role, "The retrieved user role should match the created user role")
+	assert.Equal(t, createdUser.ChatID, retrievedUser.ChatID, "The retrieved user ChatID should match the created user ChatID")
 
 	// Test retrieving a user with a non-existent ID
-	nonExistentID := "non-existent-id"
+	nonExistentID := "00000000-0000-0000-0000-000000000000"
 	retrievedUser, err = users.GetUserByIDService(db, nonExistentID)
 	assert.Error(t, err, "Retrieving a user with a non-existent ID should return an error")
-	assert.Equal(t, "user not found", err.Error())
+	assert.Equal(t, "user not found", err.Error(), "Error message should be 'user not found'")
+	assert.Equal(t, models.Users{}, retrievedUser, "Retrieved user should be an empty struct for a non-existent ID")
 }

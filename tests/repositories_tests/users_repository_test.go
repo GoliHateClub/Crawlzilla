@@ -12,13 +12,14 @@ func TestCreateUser(t *testing.T) {
 	db := SetupTestDB()
 	defer db.Exec("DROP TABLE users")
 
-	user := models.Users{
-		Telegram_ID: int64(12345),
-	}
+	telegramID := int64(12345)
+	chatID := int64(67890) // Example chat ID
 
-	user, err := repositories.CreateUser(db, user.Telegram_ID)
+	user, err := repositories.CreateUser(db, telegramID, chatID)
 	assert.NoError(t, err, "Creating user should not return an error")
-	assert.Equal(t, user.Role, models.RoleUser, "Role should match")
+	assert.Equal(t, models.RoleUser, user.Role, "Role should match")
+	assert.Equal(t, telegramID, user.Telegram_ID, "Telegram_ID should match")
+	assert.Equal(t, chatID, user.ChatID, "ChatID should match")
 }
 
 func TestGetUserByID(t *testing.T) {
