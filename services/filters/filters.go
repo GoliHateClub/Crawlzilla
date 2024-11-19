@@ -136,6 +136,12 @@ func RemoveFilter(db *gorm.DB, userID, filterID string) error {
 
 	return errors.New("role not authorized to delete filters")
 }
+
+// RemoveAllFilters removes all user's filters (Clear History)
+func RemoveAllFilters(db *gorm.DB, userID string) error {
+	return repositories.RemoveAllFilters(db, userID)
+}
+
 func GetFilterByID(db *gorm.DB, filterID string) (models.Filters, error) {
 	var filter models.Filters
 	err := db.Where("id = ?", filterID).First(&filter).Error
