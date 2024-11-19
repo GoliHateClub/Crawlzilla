@@ -23,6 +23,9 @@ var MainMenu = [][]MenuItem{
 		{Path: "/see_all_ads", IsAdmin: false, Name: "نمایش پربازدیدترین آگهی‌ها"},
 	},
 	{
+		{Path: "/most_filtered_ads", IsAdmin: false, Name: "پر جستوجوترین آگهی ها"},
+	},
+	{
 		{Path: "/add_ad", IsAdmin: true, Name: "اضافه کردن آگهی"},
 		{Path: "/remove_ad", IsAdmin: true, Name: "حذف کردن آگهی"},
 		{Path: "/update_ad", IsAdmin: true, Name: "ویرایش کردن آگهی"},

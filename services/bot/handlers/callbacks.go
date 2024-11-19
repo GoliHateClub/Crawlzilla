@@ -52,6 +52,8 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 		filters.ExportFilteredResultsConversation(ctx, cache.CreateNewUserState("export_filter", update.CallbackQuery), update)
 	case action == "/remove_all_filters":
 		filters.RemoveAllFiltersConversation(ctx, cache.CreateNewUserState("remove_all_filters", update.CallbackQuery), update)
+	case len(action) >= len("/most_filtered_ads") && action[:len("/most_filtered_ads")] == "/most_filtered_ads":
+		ads.GetMostFilteredAdsConversation(ctx, cache.CreateNewUserState("most_filtered_ads", update.CallbackQuery), update)
 
 	}
 
