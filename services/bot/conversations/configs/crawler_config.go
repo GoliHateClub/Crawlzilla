@@ -18,7 +18,7 @@ func ConfigCrawlerConversation(ctx context.Context, state cache.UserState, updat
 	switch state.Stage {
 	case "init":
 		// Ask the user for the first parameter
-		msg := tgbotapi.NewMessage(state.ChatId, "لطفاً زمان کرال (crawl time) را بر حسب ثانیه وارد کنید:")
+		msg := tgbotapi.NewMessage(state.ChatId, "لطفاً زمان کرال (crawl time) را بر حسب دقیقه وارد کنید:")
 		bot.Send(msg)
 
 		// Update user state
