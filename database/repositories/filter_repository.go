@@ -93,6 +93,15 @@ func RemoveFilter(db *gorm.DB, filterID string) error {
 	return nil
 }
 
+// RemoveAllFilters deletes all filters by userID
+func RemoveAllFilters(db *gorm.DB, userID string) error {
+	// Use a WHERE query to target rows with the given userID
+	if err := db.Where("user_id = ?", userID).Delete(&models.Filters{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 // GetFilterByID retrieves a filter by its ID
 func GetFilterByID(db *gorm.DB, filterID string) (*models.Filters, error) {
 	var filter models.Filters
