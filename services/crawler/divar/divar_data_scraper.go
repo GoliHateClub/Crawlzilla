@@ -478,8 +478,8 @@ func ScrapPropertyPage(pageURL string) (models.Ads, error) {
 
 	err = chromedp.Run(ctx,
 		chromedp.Click(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.post-actions > button.kt-button.kt-button--primary.post-actions__get-contact`, chromedp.NodeVisible),
-		chromedp.Sleep(1*time.Second),
-		chromedp.EvaluateAsDevTools(`document.querySelector("#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.expandable-box > div.copy-row > div > div.kt-base-row__end.kt-unexpandable-row__value-box > p") !== null`, &contactExists),
+		chromedp.Sleep(2*time.Second),
+		chromedp.EvaluateAsDevTools(`document.querySelector("#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.expandable-box > div.copy-row > div > div.kt-base-row__end.kt-unexpandable-row__value-box > a") !== null`, &contactExists),
 	)
 	if err != nil {
 		log.Println("Cant get Contact Number element:", err)
@@ -487,7 +487,7 @@ func ScrapPropertyPage(pageURL string) (models.Ads, error) {
 
 	if contactExists {
 		err = chromedp.Run(ctx,
-			chromedp.Text(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.expandable-box > div.copy-row > div > div.kt-base-row__end.kt-unexpandable-row__value-box > p`, &stringContactNumber),
+			chromedp.Text(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > section:nth-child(1) > div.expandable-box > div.copy-row > div > div.kt-base-row__end.kt-unexpandable-row__value-box > a`, &stringContactNumber),
 		)
 		if err != nil {
 			log.Println("Cant get Contact Number:", err)
