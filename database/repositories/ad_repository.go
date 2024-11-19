@@ -51,7 +51,7 @@ func GetAllAds(db *gorm.DB, page int, pageSize int) ([]models.AdSummary, int64, 
 	offset := (page - 1) * pageSize
 
 	// Retrieve paginated records with specific fields
-	err := db.Model(&models.Ads{}).Select("ID", "Title", "ImageURL").Offset(offset).Limit(pageSize).Find(&ads).Error
+	err := db.Model(&models.Ads{}).Select("ID", "Title", "ImageURL").Offset(offset).Limit(pageSize).Order("visit_count DESC").Find(&ads).Error
 	return ads, totalRecords, err
 }
 
