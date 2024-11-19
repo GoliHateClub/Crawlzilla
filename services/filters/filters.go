@@ -96,6 +96,21 @@ func CreateOrUpdateFilter(db *gorm.DB, filter models.Filters) (string, error) {
 	if err := validateFilterFields(filter); err != nil {
 		return "", err
 	}
+	if filter.CategoryType == "فروش" {
+		filter.CategoryType = "sell"
+	} else if filter.CategoryType == "اجاره" {
+		filter.CategoryType = "rent"
+	} else {
+		filter.CategoryType = ""
+	}
+
+	if filter.PropertyType == "آپارتمانی" {
+		filter.PropertyType = "apartment"
+	} else if filter.PropertyType == "ویلایی" {
+		filter.PropertyType = "vila"
+	} else {
+		filter.PropertyType = ""
+	}
 
 	err := repositories.CreateOrUpdateFilter(db, &filter)
 	if err != nil {

@@ -74,7 +74,7 @@ func ScrapPropertyPage(pageURL string) (models.Ads, error) {
 	// Extract Category
 	var categoryText string
 	err = chromedp.Run(ctx,
-		chromedp.Text(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > div > nav > div > a:nth-child(1) > button > span`, &categoryText),
+		chromedp.Text(`#app > div.container--has-footer-d86a9.kt-container > div > main > article > div > div.kt-col-5 > div > nav > div > a > button > span`, &categoryText),
 	)
 	if err != nil {
 		log.Println("cant get category string:", err)
@@ -90,7 +90,7 @@ func ScrapPropertyPage(pageURL string) (models.Ads, error) {
 		if property == "خانه" {
 			result.PropertyType = "vila"
 		} else if property == "آپارتمان" {
-			result.PropertyType = "house"
+			result.PropertyType = "apartment"
 		} else {
 			return result, errors.New("property type not found")
 		}
@@ -99,7 +99,7 @@ func ScrapPropertyPage(pageURL string) (models.Ads, error) {
 		if property == "خانه" {
 			result.PropertyType = "vila"
 		} else if property == "آپارتمان" {
-			result.PropertyType = "house"
+			result.PropertyType = "apartment"
 		} else {
 			return result, errors.New("property type not found")
 		}

@@ -38,7 +38,6 @@ func ApplyFilterConversation(ctx context.Context, state cache.UserState, update 
 
 	// Fetch filtered ads using the provided service
 	adsData, err := search.GetFilteredAds(database.DB, filterID, page, pageSize)
-	log.Println(filterID, page, pageSize)
 	if err != nil {
 		bot.Send(tgbotapi.NewMessage(state.ChatId, "خطا در دریافت آگهی‌ها با استفاده از فیلتر"))
 		return
