@@ -6,6 +6,7 @@ import (
 	"Crawlzilla/services/ads"
 	"context"
 	"fmt"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"go.uber.org/zap"
 )
@@ -52,8 +53,15 @@ func GetAdDetailsConversation(ctx context.Context, update tgbotapi.Update) {
 			"🏘️ *محله:* %s\n"+
 			"📐 *مساحت:* %d متر مربع\n"+
 			"💰 *قیمت:* %d تومان\n"+
-			"📞 *شماره تماس:* %s",
-		ad.Title, ad.Description, ad.City, ad.Neighborhood, ad.Area, ad.Price, ad.ContactNumber,
+			"📞 *شماره تماس:* %s\n"+
+			"💰 *تاریخ:* %v \n"+
+			"*مرجع:* %v \n"+
+			"*طبقه:* %v \n"+
+			"*کل طبقه:* %v \n"+
+			"*تغداد اتاق:* %v \n"+
+			"*نوع آگهی:* %v \n"+
+			"*نوع ملک:* %v \n",
+		ad.Title, ad.Description, ad.City, ad.Neighborhood, ad.Area, ad.Price, ad.ContactNumber, ad.CreatedAt, ad.Reference, ad.FloorNumber, ad.TotalFloors, ad.Room, ad.CategoryType, ad.PropertyType,
 	)
 
 	// Decide the message type based on the presence of an image URL
