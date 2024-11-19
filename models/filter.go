@@ -31,6 +31,7 @@ type Filters struct {
 	MaxRoom        int       `gorm:"type:int"`
 	MinFloorNumber int       `gorm:"type:int"`
 	MaxFloorNumber int       `gorm:"type:int"`
+	UsageCount     int       `gorm:"type:int"`
 	HasElevator    bool      `gorm:"type:boolean"`
 	HasStorage     bool      `gorm:"type:boolean"`
 	HasParking     bool      `gorm:"type:boolean"`
