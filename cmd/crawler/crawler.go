@@ -4,7 +4,9 @@ import (
 	"Crawlzilla/database"
 	"Crawlzilla/database/repositories"
 	cfg "Crawlzilla/logger"
+	"Crawlzilla/services/bot/notification"
 	"Crawlzilla/services/crawler/divar"
+	"Crawlzilla/utils"
 	"context"
 	"fmt"
 	"log"
@@ -18,15 +20,18 @@ import (
 // WorkerPool size
 const numWorkers = 1 //TODO: from .env
 
-// Worker function that processes jobs
-func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync.WaitGroup, cancel context.CancelFunc) {
+type CrawlerState struct {
+	SuccessAdCount int
+	FailAdCount    int
+	mu             sync.Mutex // To avoid race conditions
+}
+
+func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, state *CrawlerState, wg *sync.WaitGroup, cancel context.CancelFunc) {
 	defer wg.Done()
 
 	configLogger := ctx.Value("configLogger").(cfg.ConfigLoggerType)
 	crawlerLogger, _ := configLogger("crawler")
 
-	successAdCounter := 0
-	failAdCount := 0
 	for {
 		select {
 		case job, ok := <-jobs:
@@ -35,26 +40,32 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync
 				return
 			}
 
-			crawlerLogger.Info("Scraping Ad Number", zap.Int("successAdCounter", successAdCounter+1))
+			crawlerLogger.Info("Scraping Ad Number", zap.Int("successAdCounter", state.SuccessAdCount+1))
 			data, err := divar.ScrapPropertyPage("https://divar.ir" + job.URL)
 			if err != nil {
 				crawlerLogger.Warn("page passed! property type is not house or vila", zap.String("passedURL", "https://divar.ir"+job.URL))
-				failAdCount++
+				state.mu.Lock()
+				state.FailAdCount++
+				state.mu.Unlock()
 				continue
 			}
+
 			// Save the scrape data to the database
 			if id, err := repositories.CreateAd(database.DB, &data); err != nil {
-				crawlerLogger.Error("Failed to add scrape result:", zap.Error(err))
+				crawlerLogger.Warn("Data Exists:", zap.String("Existed URL", "https://divar.ir"+data.URL))
 			} else {
 				crawlerLogger.Info("added to db successfully", zap.String("Ad ID", id))
 			}
 
 			// Increment the counter and check if we reached maxAdCount
-			successAdCounter++
-			if successAdCounter >= maxAdCount {
+			state.mu.Lock()
+			state.SuccessAdCount++
+			if state.SuccessAdCount >= maxAdCount {
+				state.mu.Unlock()
 				cancel() // Trigger context cancellation
 				return
 			}
+			state.mu.Unlock()
 
 		case <-ctx.Done():
 			// Context canceled, exit worker
@@ -65,8 +76,7 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, wg *sync
 	}
 }
 
-func StartDivarCrawler(ctx context.Context) {
-
+func StartDivarCrawler(ctx context.Context, state *CrawlerState) {
 	configLogger := ctx.Value("configLogger").(cfg.ConfigLoggerType)
 	crawlerLogger, _ := configLogger("crawler")
 
@@ -90,7 +100,7 @@ func StartDivarCrawler(ctx context.Context) {
 	// Launch workers
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
-		go worker(ctx, jobs, maxAdCount, &wg, cancel)
+		go worker(ctx, jobs, maxAdCount, state, &wg, cancel)
 	}
 
 	// Start a goroutine to fetch URLs and send them to the jobs channel
@@ -103,5 +113,20 @@ func StartDivarCrawler(ctx context.Context) {
 	<-ctx.Done()
 	fmt.Println("Received shutdown signal, closing down...")
 	crawlerLogger.Info("Received shutdown signal, closing down...")
-	return
+}
+
+func RunCrawler(ctx context.Context) {
+	// Create shared state for success and fail counts
+	state := &CrawlerState{}
+
+	metrics := utils.MeasureExecutionStats(func() { StartDivarCrawler(ctx, state) })
+
+	// Access shared state after crawler finishes
+	state.mu.Lock()
+	successAdCount := state.SuccessAdCount
+	failAdCount := state.FailAdCount
+	state.mu.Unlock()
+
+	metrics = metrics + fmt.Sprintf("Success Crawled Ad Count: %v\nFailed Crawled Ad Count: %v\n", successAdCount, failAdCount)
+	notification.NotifySuperAdmin(ctx, metrics)
 }

@@ -19,7 +19,6 @@ import (
 	"Crawlzilla/config"
 	"Crawlzilla/database"
 	"Crawlzilla/logger"
-	"Crawlzilla/utils"
 )
 
 func main() {
@@ -56,7 +55,7 @@ func main() {
 	c := cron.New()
 	c.AddFunc("@daily", func() {
 		log.Println("Starting Crawler...")
-		utils.MeasureExecutionStats(func() { crawler.StartDivarCrawler(ctx) })
+		crawler.RunCrawler(ctx)
 		log.Println("Crawler stopped.")
 	})
 
