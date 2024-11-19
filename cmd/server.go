@@ -53,11 +53,19 @@ func main() {
 	defer wg.Wait()
 
 	c := cron.New()
+	// Divar Crawler
 	c.AddFunc("@daily", func() {
 		log.Println("Starting Crawler...")
 		crawler.RunCrawler(ctx)
 		log.Println("Crawler stopped.")
 	})
+
+	// Sheypoor Crawler
+	// c.AddFunc("@daily", func() {
+	// 	log.Println("Starting Crawler...")
+	// 	crawler.StartSheypoorWorker(&wg)
+	// 	log.Println("Crawler stopped.")
+	// })
 
 	c.Start()
 	defer c.Stop()

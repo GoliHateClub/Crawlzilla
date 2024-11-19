@@ -4,14 +4,14 @@ var MainMenu = [][]MenuItem{
 	{
 		{Path: "/config", IsAdmin: true, Name: "پیکربندی کرالر"},
 	},
-	{
-		{Path: "/add_admin", IsAdmin: true, Name: "اضافه کردن ادمین"},
-		{Path: "/remove_admin", IsAdmin: true, Name: "حذف کردن ادمین"},
-	},
-	{
-		{Path: "/get_admin", IsAdmin: true, Name: "نمایش اطلاعات ادمین"},
-		{Path: "/get_all_users", IsAdmin: true, Name: "نمایش همه کاربران"},
-	},
+	// {
+	// 	{Path: "/add_admin", IsAdmin: true, Name: "اضافه کردن ادمین"},
+	// 	{Path: "/remove_admin", IsAdmin: true, Name: "حذف کردن ادمین"},
+	// },
+	// {
+	// 	{Path: "/get_admin", IsAdmin: true, Name: "نمایش اطلاعات ادمین"},
+	// 	{Path: "/get_all_users", IsAdmin: true, Name: "نمایش همه کاربران"},
+	// },
 	{
 		{Path: "/see_all_filters", IsAdmin: false, Name: "نمایش همه فیلتر ها"},
 		{Path: "/add_filter", IsAdmin: false, Name: "اضافه کردن فیلتر"},
