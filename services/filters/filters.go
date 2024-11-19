@@ -112,6 +112,16 @@ func CreateOrUpdateFilter(db *gorm.DB, filter models.Filters) (string, error) {
 		filter.PropertyType = ""
 	}
 
+	if filter.Reference == "دیوار" {
+		filter.Reference = "divar"
+	} else if filter.Reference == "شیپور" {
+		filter.Reference = "sheypoor"
+	} else if filter.Reference == "ادمین" {
+		filter.Reference = "admin"
+	} else {
+		filter.Reference = ""
+	}
+
 	err := repositories.CreateOrUpdateFilter(db, &filter)
 	if err != nil {
 		return "", err

@@ -86,6 +86,7 @@ func AddFilterConversation(ctx context.Context, state cache.UserState, update tg
 		bot.Send(tgbotapi.NewMessage(state.ChatId, `لطفاً اطلاعات را به این صورت وارد کن:
 		
 شهر: تهران  
+مرجع: دیوار/شیپور/ادمین 
 محله: تجریش  
 نوع آگهی: فروش  
 نوع ملک: آپارتمانی  
@@ -125,6 +126,7 @@ func AddFilterConversation(ctx context.Context, state cache.UserState, update tg
 		input := strings.TrimSpace(update.Message.Text)
 		fields := map[string]string{
 			"City":         `(?i)شهر[:：\s]*(.+)`,
+			"Reference":    `(?i)مرجع[:：\s]*(.+)`,
 			"Neighborhood": `(?i)محله[:：\s]*(.+)`,
 			"CategoryType": `(?i)نوع آگهی[:：\s]*(.+)`,
 			"PropertyType": `(?i)نوع ملک[:：\s]*(.+)`,
