@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"Crawlzilla/cmd/crawler"
 	"Crawlzilla/services/cache"
 	crawlerConfigService "Crawlzilla/services/crawler"
 	"context"
@@ -163,4 +164,11 @@ func ConfigCrawlerConversation(ctx context.Context, state cache.UserState, updat
 		// Inform user of success
 		bot.Send(tgbotapi.NewMessage(state.ChatId, "تنظیمات کرالر با موفقیت اعمال شد!"))
 	}
+}
+
+func StartCrawlerConversation(ctx context.Context, update tgbotapi.Update) {
+	bot := ctx.Value("bot").(*tgbotapi.BotAPI)
+
+	bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "کرالر شروع کرد!"))
+	go crawler.RunCrawler(ctx)
 }

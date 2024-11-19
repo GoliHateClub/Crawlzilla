@@ -54,7 +54,8 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 		filters.RemoveAllFiltersConversation(ctx, cache.CreateNewUserState("remove_all_filters", update.CallbackQuery), update)
 	case len(action) >= len("/most_filtered_ads") && action[:len("/most_filtered_ads")] == "/most_filtered_ads":
 		ads.GetMostFilteredAdsConversation(ctx, cache.CreateNewUserState("most_filtered_ads", update.CallbackQuery), update)
-
+	case action == "/start_crawler":
+		configs.StartCrawlerConversation(ctx, update)
 	}
 
 	// Acknowledge the callback to prevent the loading indicator
