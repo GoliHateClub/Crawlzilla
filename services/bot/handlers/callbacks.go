@@ -50,6 +50,9 @@ func HandleCallbacks(ctx context.Context, update tgbotapi.Update) {
 		configs.ConfigCrawlerConversation(ctx, cache.CreateNewUserState("config_crawler", update.CallbackQuery), update)
 	case len(action) > len("/export_filter:") && action[:len("/export_filter:")] == "/export_filter:":
 		filters.ExportFilteredResultsConversation(ctx, cache.CreateNewUserState("export_filter", update.CallbackQuery), update)
+	case action == "/remove_all_filters":
+		filters.RemoveAllFiltersConversation(ctx, cache.CreateNewUserState("remove_all_filters", update.CallbackQuery), update)
+
 	}
 
 	// Acknowledge the callback to prevent the loading indicator
