@@ -51,7 +51,6 @@ func TestGetUserByIDService(t *testing.T) {
 	user := models.Users{
 		Telegram_ID: int64(12345),
 		ChatID:      int64(67890),
-		Role:        "super-admin",
 	}
 	createdUser, err := repositories.CreateUser(db, user.Telegram_ID, user.ChatID)
 	assert.NoError(t, err, "Creating user should not return an error")

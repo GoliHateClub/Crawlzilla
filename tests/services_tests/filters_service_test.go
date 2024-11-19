@@ -1,6 +1,7 @@
 package services_tests
 
 import (
+	"Crawlzilla/database/repositories"
 	"Crawlzilla/models"
 	"Crawlzilla/services/filters"
 	"testing"
@@ -440,4 +441,40 @@ func TestRemoveFilter(t *testing.T) {
 	err = filters.RemoveFilter(db, user.ID, "non-existent-filter")
 	assert.Error(t, err)
 
+}
+
+func TestRemoveAllFilters(t *testing.T) {
+	// Set up in-memory database
+	db := SetupSearchTestDB()
+
+	// Prepare mock user data
+	userID := "user-12345" // Use a UUID or string for the user ID
+
+	// Create some filters for the user
+	testFilters := []models.Filters{
+		{City: "City1", Sort: "price", Order: "asc", MinArea: 50, MaxArea: 100, MinPrice: 1000, MaxPrice: 5000, USER_ID: userID},
+		{City: "City2", Sort: "area", Order: "desc", MinArea: 70, MaxArea: 120, MinPrice: 2000, MaxPrice: 6000, USER_ID: userID},
+	}
+
+	// Insert filters into the database
+	for _, filter := range testFilters {
+		err := repositories.CreateOrUpdateFilter(db, &filter)
+		assert.NoError(t, err, "Creating filter should not return an error")
+	}
+
+	// Verify that filters are created
+	var createdFilters []models.Filters
+	err := db.Where("user_id = ?", userID).Find(&createdFilters).Error
+	assert.NoError(t, err)
+	assert.Equal(t, len(testFilters), len(createdFilters), "The number of filters should match")
+
+	// Call RemoveAllFilters to remove the filters
+	err = filters.RemoveAllFilters(db, userID)
+	assert.NoError(t, err, "Removing filters should not return an error")
+
+	// Verify that all filters are removed
+	var remainingFilters []models.Filters
+	err = db.Where("user_id = ?", userID).Find(&remainingFilters).Error
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(remainingFilters), "There should be no filters left for the user")
 }
