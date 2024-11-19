@@ -65,6 +65,13 @@ func ExportFilteredResultsConversation(ctx context.Context, state cache.UserStat
 	}
 	defer file.Close()
 
+	// Write BOM for UTF-8 compatibility with Excel
+	if _, err := file.Write([]byte{0xEF, 0xBB, 0xBF}); err != nil {
+		bot.Send(tgbotapi.NewMessage(state.ChatId, "خطا در نوشتن BOM به فایل CSV!"))
+		botLogger.Error("Error writing BOM to CSV file", zap.Error(err))
+		return
+	}
+
 	// Write data to CSV
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
@@ -87,7 +94,7 @@ func ExportFilteredResultsConversation(ctx context.Context, state cache.UserStat
 			strconv.Itoa(ad.Price),
 			strconv.Itoa(ad.Room),
 			strconv.Itoa(ad.Area),
-			fmt.Sprintf("https://yourdomain.com/view_ad:%s", ad.ID), // Replace with actual ad URL format
+			ad.URL,
 		})
 		if err != nil {
 			botLogger.Error("Error writing to CSV", zap.Error(err))
