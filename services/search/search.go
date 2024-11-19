@@ -132,3 +132,101 @@ func GetFilteredAds(db *gorm.DB, filterID string, page, pageSize int) (Paginated
 
 	return result, nil
 }
+
+// GetMostFilteredAds retrieves ads based on the most-used filter
+func GetMostFilteredAds(db *gorm.DB, page, pageSize int) (PaginatedAds, error) {
+	var mostUsedFilter models.Filters
+
+	// Step 1: Find the most-used filter
+	err := db.Model(&models.Filters{}).
+		Select("*").
+		Order("usage_count DESC"). // Assuming a usage_count column exists
+		First(&mostUsedFilter).Error
+	if err != nil {
+		return PaginatedAds{}, fmt.Errorf("failed to find the most-used filter: %w", err)
+	}
+
+	// Step 2: Build the ads query using the most-used filter
+	query := db.Model(&models.Ads{})
+	if mostUsedFilter.City != "" {
+		query = query.Where("city = ?", mostUsedFilter.City)
+	}
+	if mostUsedFilter.Neighborhood != "" {
+		query = query.Where("neighborhood = ?", mostUsedFilter.Neighborhood)
+	}
+	if mostUsedFilter.Reference != "" {
+		query = query.Where("reference = ?", mostUsedFilter.Reference)
+	}
+	if mostUsedFilter.CategoryType != "" {
+		query = query.Where("category_type = ?", mostUsedFilter.CategoryType)
+	}
+	if mostUsedFilter.PropertyType != "" {
+		query = query.Where("property_type = ?", mostUsedFilter.PropertyType)
+	}
+	if mostUsedFilter.MinArea > 0 {
+		query = query.Where("area >= ?", mostUsedFilter.MinArea)
+	}
+	if mostUsedFilter.MaxArea > 0 {
+		query = query.Where("area <= ?", mostUsedFilter.MaxArea)
+	}
+	if mostUsedFilter.MinPrice > 0 {
+		query = query.Where("price >= ?", mostUsedFilter.MinPrice)
+	}
+	if mostUsedFilter.MaxPrice > 0 {
+		query = query.Where("price <= ?", mostUsedFilter.MaxPrice)
+	}
+	if mostUsedFilter.MinRent > 0 {
+		query = query.Where("rent >= ?", mostUsedFilter.MinRent)
+	}
+	if mostUsedFilter.MaxRent > 0 {
+		query = query.Where("rent <= ?", mostUsedFilter.MaxRent)
+	}
+	if mostUsedFilter.MinRoom > 0 {
+		query = query.Where("room >= ?", mostUsedFilter.MinRoom)
+	}
+	if mostUsedFilter.MaxRoom > 0 {
+		query = query.Where("room <= ?", mostUsedFilter.MaxRoom)
+	}
+	if mostUsedFilter.MinFloorNumber > 0 {
+		query = query.Where("floor_number >= ?", mostUsedFilter.MinFloorNumber)
+	}
+	if mostUsedFilter.MaxFloorNumber > 0 {
+		query = query.Where("floor_number <= ?", mostUsedFilter.MaxFloorNumber)
+	}
+	if mostUsedFilter.HasElevator {
+		query = query.Where("has_elevator = ?", true)
+	}
+	if mostUsedFilter.HasStorage {
+		query = query.Where("has_storage = ?", true)
+	}
+	if mostUsedFilter.HasParking {
+		query = query.Where("has_parking = ?", true)
+	}
+	if mostUsedFilter.HasBalcony {
+		query = query.Where("has_balcony = ?", true)
+	}
+
+	// Step 3: Count total records matching the most-used filter
+	totalRecords, err := repositories.CountFilteredAds(db, query)
+	if err != nil {
+		return PaginatedAds{}, err
+	}
+
+	// Step 4: Fetch paginated ads
+	ads, err := repositories.GetFilteredAds(db, query, page, pageSize)
+	if err != nil {
+		return PaginatedAds{}, err
+	}
+
+	// Step 5: Calculate total pages
+	totalPages := int((totalRecords + int64(pageSize) - 1) / int64(pageSize))
+
+	// Step 6: Prepare the paginated response
+	result := PaginatedAds{
+		Data:  ads,
+		Pages: totalPages,
+		Page:  page,
+	}
+
+	return result, nil
+}

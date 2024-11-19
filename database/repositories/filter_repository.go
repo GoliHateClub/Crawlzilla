@@ -111,5 +111,9 @@ func GetFilterByID(db *gorm.DB, filterID string) (*models.Filters, error) {
 		}
 		return nil, err
 	}
+	// Increment the usage_count column
+	if err := db.Model(&models.Filters{}).Where("id = ?", filterID).UpdateColumn("usage_count", gorm.Expr("usage_count + ?", 1)).Error; err != nil {
+		return nil, err
+	}
 	return &filter, nil
 }
