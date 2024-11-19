@@ -91,7 +91,10 @@ func ApplyFilterConversation(ctx context.Context, state cache.UserState, update 
 			))
 		}
 	}
-
+	// Add "Export Results" button
+	buttons = append(buttons, tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("📤 خروجی CSV", fmt.Sprintf("/export_filter:%s", filterID)),
+	))
 	// Send the response
 	msg := tgbotapi.NewMessage(state.ChatId, response)
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(buttons...)
