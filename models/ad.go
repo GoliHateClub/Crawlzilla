@@ -80,7 +80,5 @@ func (c *Ads) BeforeCreate(tx *gorm.DB) (err error) {
 	// Set the hash field with the generated hash
 	c.Hash = hex.EncodeToString(hash.Sum(nil))
 
-	// fmt.Println("Generated Hash:", c.Hash) // Log the hash to confirm it's being set correctly
-
 	return nil
 }

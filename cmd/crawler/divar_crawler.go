@@ -31,6 +31,7 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, state *C
 
 	configLogger := ctx.Value("configLogger").(cfg.ConfigLoggerType)
 	crawlerLogger, _ := configLogger("crawler")
+	databaseLogger, _ := configLogger("database")
 
 	for {
 		select {
@@ -52,9 +53,9 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, state *C
 
 			// Save the scrape data to the database
 			if id, err := repositories.CreateAd(database.DB, &data); err != nil {
-				crawlerLogger.Warn("Data Exists:", zap.String("Existed URL", "https://divar.ir"+data.URL))
+				databaseLogger.Warn("data Exists:", zap.String("Existed URL", "https://divar.ir"+data.URL))
 			} else {
-				crawlerLogger.Info("added to db successfully", zap.String("Ad ID", id))
+				databaseLogger.Info("added to db successfully", zap.String("Ad ID", id))
 			}
 
 			// Increment the counter and check if we reached maxAdCount
@@ -69,7 +70,6 @@ func worker(ctx context.Context, jobs <-chan divar.Job, maxAdCount int, state *C
 
 		case <-ctx.Done():
 			// Context canceled, exit worker
-			fmt.Println("Worker received shutdown signal, stopping...")
 			crawlerLogger.Info("worker received shutdown signal, stopping...")
 			return
 		}
@@ -111,7 +111,6 @@ func StartDivarCrawler(ctx context.Context, state *CrawlerState) {
 
 	// Wait for shutdown signal
 	<-ctx.Done()
-	fmt.Println("Received shutdown signal, closing down...")
 	crawlerLogger.Info("Received shutdown signal, closing down...")
 }
 

@@ -5,7 +5,6 @@ import (
 	"Crawlzilla/services/bot/handlers"
 	"Crawlzilla/services/cache"
 	"context"
-	"log"
 )
 
 func StartBot(ctx context.Context) {
@@ -24,6 +23,5 @@ func StartBot(ctx context.Context) {
 	// Wait for shutdown signal
 	<-ctx.Done()
 	botLogger.Info("Bot shutdown initiated.")
-	log.Println("Bot shutdown initiated.")
 	return
 }

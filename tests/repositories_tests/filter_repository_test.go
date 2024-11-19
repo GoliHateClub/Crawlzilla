@@ -3,7 +3,6 @@ package repositories_tests
 import (
 	"Crawlzilla/database/repositories"
 	"Crawlzilla/models"
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +14,6 @@ func TestGetFilterByID(t *testing.T) {
 	// Seed test data
 	filter := models.Filters{Title: "Test", City: "Test City", HasParking: true}
 	db.Create(&filter)
-	log.Println("HEREEEEEEEEEEEEEE ", filter)
 	// Test repository function
 	retrievedFilter, err := repositories.GetFilterByID(db, filter.ID)
 	assert.NoError(t, err)
