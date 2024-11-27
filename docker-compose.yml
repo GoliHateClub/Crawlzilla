@@ -1,0 +1,32 @@
+services:
+  crawlzilla-redis:
+    image: redis/redis-stack:latest
+    container_name: crawlzilla-redis
+    ports:
+      - "8003:8001"
+      - "6380:6379"
+    volumes:
+      - crawlzilla-redis-volume:/data
+
+  crawlzilla-db:
+    container_name: crawlzilla-db
+    image: postgres:latest
+    restart: always
+    env_file: .env
+    volumes:
+      - crawlzilla-db-volume:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  crawlzilla-db-volume:
+  crawlzilla-redis-volume:
